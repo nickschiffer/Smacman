@@ -1,0 +1,26 @@
+{
+    "files.associations": {
+        "lpc40xx.h": "c",
+        "a_adc.h": "c",
+        "a_interrupt.h": "c",
+        "array": "c",
+        "iterator": "c",
+        "string": "c",
+        "string_view": "c",
+        "vector": "c",
+        "task.h": "c",
+        "semphr.h": "c",
+        "stdio.h": "c",
+        "freertos.h": "c",
+        "a_ssp.h": "c",
+        "delay.h": "c",
+        "sj2_cli.h": "c",
+        "__locale": "c",
+        "sl_string.h": "c",
+        "ff.h": "c",
+        "filesystem": "c",
+        "my_gpio.h": "c",
+        "gpio.h": "c"
+    },
+    "python.pythonPath": "/usr/bin/python3"
+}
