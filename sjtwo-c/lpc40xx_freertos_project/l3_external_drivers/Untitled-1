@@ -1,8 +1,0 @@
-void selectRow(int row)
-{
-    (row & 0x01) ? gpio__set(a) : gpio__reset(a);
-    (row & 0x02) ? gpio__set() : gpio__reset();
-    (row & 0x04) ? gpio__set() : gpio__reset();
-    (row & 0x08) ? gpio__set() : gpio__reset();
-    (row & 0x10) ? gpio__set() : gpio__reset();
-}
