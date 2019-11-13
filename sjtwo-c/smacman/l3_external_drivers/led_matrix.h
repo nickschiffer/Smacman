@@ -1,5 +1,4 @@
-#ifndef LED_MATRIX_H
-#define LED_MATRIX_H
+#pragma once
 #include "FreeRTOS.h"
 #include "delay.h"
 #include "gpio.h"
@@ -45,5 +44,3 @@ void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint
 void led_matrix__clear_frame_buffer();
 void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color);
 void led_matrix__update_display();
-
-#endif

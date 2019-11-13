@@ -1,6 +1,4 @@
-#ifndef LED_GRAPHICS_H
-#define LED_GRAPHICS_H
+#pragma once
 
 #include "led_matrix.h"
 void drawPackMan(int row, int column);
-#endif
