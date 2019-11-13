@@ -1,4 +1,6 @@
 # Smacman
 CMPE-244 Game Project
+## Abstract:
+Our team is planning on creating a unique 2 player game involving a central screen and two auxiliary controllers. The two opponents will face one another and will have a paddle on their side much like the game pong. A ball will travel between players which they have to deflect away. Additionally, each player will have a “monster” that will continuously move towards the ball. If a monster collides with the ball, that opponent of the owner of the monster will lose. Therefore, it is beneficial for a player to try to place the ball closer to their monster and further away from the opponent’s monster. Additionally, if the ball contacts the side of the screen behind the player’s paddle, they will also lose. As the game progresses, the speed of the ball will increase and eventually additional balls will be added. There are also possibilities “powerups” being implemented that invoke actions such as temporary invincibility from the opponent’s monster. The controllers will be wireless and communicate with the master board which runs the game and drives the 64x64 LED matrix. 
 
 Follow along [here.](https://github.com/nickschiffer/Smacman/projects/1)
