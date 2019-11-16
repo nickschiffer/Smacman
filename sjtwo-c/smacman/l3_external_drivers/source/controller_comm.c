@@ -16,11 +16,11 @@
  *
  ******************************************************************************/
 controller_comm__message_s controller_comm__wait_on_next_message(controller_comm_s controller) {
-    controller_comm__role_e recipient            = {0};
-    controller_comm__role_e sender               = {0};
-    controller_comm__message_type_e message_type = {0};
-    uint8_t message_data_byte1                   = {0};
-    uint8_t message_data_byte2                   = {0};
+    uint8_t recipient          = {0};
+    uint8_t sender             = {0};
+    uint8_t message_type       = {0};
+    uint8_t message_data_byte1 = {0};
+    uint8_t message_data_byte2 = {0};
 #ifdef CONTROLLER_COMM__CHECKSUM
     uint8_t message_checksum_byte1               = {0};
     uint8_t message_checksum_byte2               = {0};
@@ -34,15 +34,15 @@ controller_comm__message_s controller_comm__wait_on_next_message(controller_comm
     uart__get(controller.uart, &message_checksum_byte1, controller_comm__message_receive_timeout_ms);
     uart__get(controller.uart, &message_checksum_byte2, controller_comm__message_receive_timeout_ms);
 #else
-    xQueueReceive(controller.rx_queue, &recipient,              portMAX_DELAY);
-    xQueueReceive(controller.rx_queue, &sender,                 portMAX_DELAY);
-    xQueueReceive(controller.rx_queue, &message_type,           portMAX_DELAY);
-    xQueueReceive(controller.rx_queue, &message_data_byte1,     portMAX_DELAY);
-    xQueueReceive(controller.rx_queue, &message_data_byte2,     portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &recipient,              portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &sender,                 portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &message_type,           portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &message_data_byte1,     portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &message_data_byte2,     portMAX_DELAY);
 #endif
     controller_comm__message_s message = {0};
-    message.recipient = recipient;
-    message.sender    = sender;
+    message.recipient = (controller_comm__role_e) recipient;
+    message.sender    = (controller_comm__role_e) sender;
     message.data      = (message_data_byte2 << 8 | message_data_byte1) & 0xFFFF;
 #ifdef CONTROLLER_COMM__CHECKSUM
     message.checksum  = (message_checksum_byte2 << 8 | message_checksum_byte1) & 0xFFF;
@@ -51,14 +51,17 @@ controller_comm__message_s controller_comm__wait_on_next_message(controller_comm
     return message;
 }
 bool controller_comm__send_message(controller_comm_s controller, controller_comm__message_s message) {
-    uint8_t message_data_byte1 = message.data & 0xFF;
-    uint8_t message_data_byte2 = (message.data >> 8) & 0xFF;
+    const uint8_t message_data_byte1 =  message.data       & 0xFF;
+    const uint8_t message_data_byte2 = (message.data >> 8) & 0xFF;
+    const uint8_t recipient    = (uint8_t) (message.recipient    & 0xFF);
+    const uint8_t sender       = (uint8_t) (message.sender       & 0xFF);
+    const uint8_t message_type = (uint8_t) (message.message_type & 0xFF);
 
-    xQueueSend(controller.tx_queue, &message.recipient,    portMAX_DELAY);
-    xQueueSend(controller.tx_queue, &message.sender,       portMAX_DELAY);
-    xQueueSend(controller.tx_queue, &message.message_type, portMAX_DELAY);
-    xQueueSend(controller.tx_queue, &message_data_byte1,   portMAX_DELAY);
-    xQueueSend(controller.tx_queue, &message_data_byte2,   portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &recipient,            portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &sender,               portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &message_type,         portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &message_data_byte1,   portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &message_data_byte2,   portMAX_DELAY);
     return true;
 }
 
@@ -114,7 +117,7 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     uart__init(uart, clock__get_peripheral_clock_hz(), controller_comm__uart_baud_rate);
     uart__enable_queues(controller.uart, controller.rx_queue, controller.tx_queue);
     if (role != CONTROLLER_COMM__ROLE_MASTER){
-        acceleration__init();
+        (void)acceleration__init();
     }
     return controller;
 }
