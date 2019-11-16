@@ -15,9 +15,9 @@ void led_matrix__init() {
   D = gpio__construct_with_function(GPIO__PORT_0, 16, GPIO__FUNCITON_0_IO_PIN);
   E = gpio__construct_with_function(GPIO__PORT_0, 15, GPIO__FUNCITON_0_IO_PIN);
 
-  oe    = gpio__construct_with_function(GPIO__PORT_1, 20, GPIO__FUNCITON_0_IO_PIN);
+  oe = gpio__construct_with_function(GPIO__PORT_1, 20, GPIO__FUNCITON_0_IO_PIN);
   latch = gpio__construct_with_function(GPIO__PORT_1, 23, GPIO__FUNCITON_0_IO_PIN);
-  clk   = gpio__construct_with_function(GPIO__PORT_1, 28, GPIO__FUNCITON_0_IO_PIN);
+  clk = gpio__construct_with_function(GPIO__PORT_1, 28, GPIO__FUNCITON_0_IO_PIN);
 
   r1 = gpio__construct_as_output(GPIO__PORT_2, 0);
   g1 = gpio__construct_as_output(GPIO__PORT_2, 1);
@@ -26,15 +26,15 @@ void led_matrix__init() {
   g2 = gpio__construct_as_output(GPIO__PORT_2, 5);
   b2 = gpio__construct_as_output(GPIO__PORT_2, 6);
 
-  A = gpio__construct_as_output(GPIO__PORT_2, 7);  // Gray
-  B = gpio__construct_as_output(GPIO__PORT_2, 8);  // Maroon
-  C = gpio__construct_as_output(GPIO__PORT_2, 9);  // Orange
-  D = gpio__construct_as_output(GPIO__PORT_0, 16); // Violet
-  E = gpio__construct_as_output(GPIO__PORT_0, 15); // Yellow
+  A = gpio__construct_as_output(GPIO__PORT_2, 7);
+  B = gpio__construct_as_output(GPIO__PORT_2, 8);
+  C = gpio__construct_as_output(GPIO__PORT_2, 9);
+  D = gpio__construct_as_output(GPIO__PORT_0, 16);
+  E = gpio__construct_as_output(GPIO__PORT_0, 15);
 
-  oe    = gpio__construct_as_output(GPIO__PORT_1, 20); // Gray
-  latch = gpio__construct_as_output(GPIO__PORT_1, 23); // White
-  clk   = gpio__construct_as_output(GPIO__PORT_1, 28); // Brown
+  oe = gpio__construct_as_output(GPIO__PORT_1, 20);
+  latch = gpio__construct_as_output(GPIO__PORT_1, 23);
+  clk = gpio__construct_as_output(GPIO__PORT_1, 28);
 
   gpio__reset(A);
   gpio__reset(B);
@@ -52,13 +52,13 @@ void led_matrix__init() {
   gpio__reset(clk);
 }
 
-void led_matrix__enable_display()  { gpio__reset(oe); }
+void led_matrix__enable_display() { gpio__reset(oe); }
 
 void led_matrix__disable_display() { gpio__set(oe); }
 
-void led_matrix__enable_latch()    { gpio__set(latch); }
+void led_matrix__enable_latch() { gpio__set(latch); }
 
-void led_matrix__disable_latch()   { gpio__reset(latch); }
+void led_matrix__disable_latch() { gpio__reset(latch); }
 
 void led_matrix__select_row(int row) {
   (row & 0x01) ? gpio__set(A) : gpio__reset(A);
@@ -70,37 +70,39 @@ void led_matrix__select_row(int row) {
 
 void led_matrix__clear_pixel(int row, int column) {
   uint64_t pixel = ~((uint64_t)1 << column);
-  frame_buffer[row][RED_PLANE]   &= pixel;
+  frame_buffer[row][RED_PLANE] &= pixel;
   frame_buffer[row][GREEN_PLANE] &= pixel;
-  frame_buffer[row][BLUE_PLANE]  &= pixel;
+  frame_buffer[row][BLUE_PLANE] &= pixel;
 }
 
 void led_matrix__set_pixel(int row, int col, led_matrix__color_e color) {
   uint64_t pixel = ((uint64_t)1 << col);
   if (color & 0x01) {
-    frame_buffer[row][BLUE_PLANE]  |= pixel;
+    frame_buffer[row][BLUE_PLANE] |= pixel;
   }
   if (color & 0x02) {
     frame_buffer[row][GREEN_PLANE] |= pixel;
   }
   if (color & 0x04) {
-    frame_buffer[row][RED_PLANE]   |= pixel;
+    frame_buffer[row][RED_PLANE] |= pixel;
   }
 }
 
 void led_matrix__set_row_data(int row, led_matrix__color_e color, uint64_t data) {
   if (color & 0x01) {
-    frame_buffer[row][BLUE_PLANE]  = data;
+    frame_buffer[row][BLUE_PLANE] = data;
   }
   if (color & 0x02) {
     frame_buffer[row][GREEN_PLANE] = data;
   }
   if (color & 0x04) {
-    frame_buffer[row][RED_PLANE]   = data;
+    frame_buffer[row][RED_PLANE] = data;
   }
 }
 
-void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint64_t data) { frame_buffer[row][plane] = data; }
+void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint64_t data) {
+  frame_buffer[row][plane] = data;
+}
 
 void led_matrix__clear_frame_buffer() { memset(frame_buffer, 0, sizeof(frame_buffer)); }
 
@@ -110,7 +112,7 @@ void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color) {
   }
 }
 
-void led_matrix__updateDisplay() {
+void led_matrix__update_display() {
   for (int i = 0; i < 32; i++) {
     led_matrix__disable_display();
     led_matrix__disable_latch();

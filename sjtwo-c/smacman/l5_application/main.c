@@ -19,7 +19,7 @@ int main(void) {
   switch_minus = gpio__construct_as_input(GPIO__PORT_1, 15); // SW2
   gpio__set_as_input(switch_plus);
   gpio__set_as_input(switch_minus);
-  led_matrix_init();
+  led_matrix__init();
   // displayGridBorders(Lime);
   // drawPackMan(32, 32);
   xTaskCreate(display_task, "led0", (2048U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
@@ -59,7 +59,7 @@ static void display_task(void *params) {
       i = 10;
     }
     drawPackMan(i - 3, i);
-    updateDisplay();
+    led_matrix__update_display();
     vTaskDelay(5);
   }
 }
