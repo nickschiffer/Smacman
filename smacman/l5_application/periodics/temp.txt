@@ -1,0 +1,174 @@
+  static void ball_task(void *params) {
+  int row_upordown_right = 4, row_upordown_left = matrix_width - 5, row_left_upordown = 2,
+      row_right_upordown = matrix_width - 3;
+  int col_up_leftorright = matrix_height - 5, col_down_leftorright = 4, col_leftorrigt_up = 2,
+      col_leftorrigt_down = matrix_height - 2;
+  
+  int var;
+  led_matrix__direction_e direction = LEFT_UP;
+  while (true) {
+    led_matrix__fill_frame_buffer_inside_grid();
+    if (direction == LEFT_UP) {
+      switch (row_left_upordown) {
+      case 2 ... matrix_width - 8:
+        led_matrix__drawBall(row_left_upordown, col_up_leftorright, direction);
+        row_left_upordown++;
+        break;
+      case matrix_width - 7 ... matrix_width:
+        var = rand();
+        if (var % 2) {
+          direction = DOWN_LEFT;
+        } else {
+          direction = RIGHT_UP;
+        }
+        row_left_upordown = 2;
+        break;
+      }
+    }
+    if (direction == RIGHT_UP) {
+      switch (row_right_upordown) {
+      case 7 ... matrix_height - 3:
+        led_matrix__drawBall(row_right_upordown, col_up_leftorright, direction);
+        row_right_upordown--;
+        break;
+      case 0 ... 6:
+        var = rand();
+        if (var % 2) {
+          direction = LEFT_UP;
+        } else {
+          direction = DOWN_RIGHT;
+        }
+        row_right_upordown = matrix_height - 3;
+        break;
+      }
+    }
+    if (direction == DOWN_LEFT) {
+      switch (col_leftorrigt_down) {
+      case 9 ... matrix_height - 2:
+        led_matrix__drawBall(row_upordown_left, col_leftorrigt_down, direction);
+        col_leftorrigt_down--;
+        break;
+      case 0 ... 8:
+        var = rand();
+        if (var % 2) {
+          direction = RIGHT_DOWN;
+        } else {
+          direction = UP_LEFT;
+        }
+        col_leftorrigt_down = matrix_height - 2;
+        break;
+      }
+    }
+    if (direction == UP_LEFT) {
+      switch (col_leftorrigt_up) {
+      case 2 ... matrix_width - 10:
+        led_matrix__drawBall(row_upordown_left, col_leftorrigt_up, direction);
+        col_leftorrigt_up++;
+        break;
+      case matrix_width - 9 ... matrix_width:
+        var = rand();
+        if (var % 2) {
+          direction = RIGHT_UP;
+        } else {
+          direction = DOWN_LEFT;
+        }
+        col_leftorrigt_up = 2;
+        break;
+      }
+    }
+
+    if (direction == RIGHT_DOWN) {
+      switch (row_right_upordown) {
+      case 7 ... matrix_height - 3:
+        led_matrix__drawBall(row_right_upordown, col_down_leftorright, direction);
+        row_right_upordown--;
+        break;
+      case 0 ... 6:
+        var = rand();
+        if (var % 2) {
+          direction = UP_RIGHT;
+        } else {
+          direction = LEFT_DOWN;
+        }
+        row_right_upordown = matrix_height - 3;
+        break;
+      }
+    }
+    if (direction == LEFT_DOWN) {
+      switch (row_left_upordown) {
+      case 2 ... matrix_width - 8:
+        led_matrix__drawBall(row_left_upordown, col_down_leftorright, direction);
+        row_left_upordown++;
+        break;
+      case matrix_width - 7 ... matrix_width:
+        var = rand();
+        if (var % 2) {
+          direction = UP_LEFT;
+        } else {
+          direction = RIGHT_DOWN;
+        }
+        row_left_upordown = 2;
+        break;
+      }
+    }
+    if (direction == UP_RIGHT) {
+      switch (col_leftorrigt_up) {
+      case 2 ... matrix_width - 10:
+        led_matrix__drawBall(row_upordown_right, col_leftorrigt_up, direction);
+        col_leftorrigt_up++;
+        break;
+      case matrix_width - 9 ... matrix_width:
+        var = rand();
+        if (var % 2) {
+          direction = LEFT_UP;
+        } else {
+          direction = DOWN_RIGHT;
+        }
+        col_leftorrigt_up = 2;
+        break;
+      }
+    }
+    if (direction == DOWN_RIGHT) {
+      switch (col_leftorrigt_down) {
+      case 9 ... matrix_height - 2:
+        led_matrix__drawBall(row_upordown_right, col_leftorrigt_down, direction);
+        col_leftorrigt_down--;
+        break;
+      case 0 ... 8:
+        var = rand();
+        if (var % 2) {
+          direction = LEFT_DOWN;
+        } else {
+          direction = UP_RIGHT;
+        }
+        col_leftorrigt_down = matrix_height - 2;
+        break;
+      }
+    }
+    vTaskDelay(150);
+  }
+}
+
+
+//
+// static void ball_task(void *params) {
+//   int row_upordown_right = 4, row_upordown_left = matrix_width - 5, row_left_upordown = 2,
+//       row_right_upordown = matrix_width - 3;
+//   int col_up_leftorright = matrix_height - 5, col_down_leftorright = 4, col_leftorrigt_up = 2,
+//       col_leftorrigt_down = matrix_height - 2;
+//   int var;
+//   ball_s ball;
+//   ball.row = matrix_width / 2;
+//   ball.col = matrix_height / 2;
+//   ball.vx = (rand() > 0.5) ? 1 : -1;
+//   ball.vy = (rand() - 0.5) * 2;
+//   // led_matrix__direction_e direction = LEFT_UP;
+//   while (true) {
+//     led_matrix__fill_frame_buffer_inside_grid();
+//     ball.x + = ball.vx;
+//     ball.x + = ball.vy;
+
+//     printf("vx :%d, vy : %d", ball.row, ball.col);
+//     vTaskDelay(500);
+//   }
+// }
