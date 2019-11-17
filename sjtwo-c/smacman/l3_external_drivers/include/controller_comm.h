@@ -13,9 +13,16 @@
 extern "C" {
 #endif
 
+#define CONTROLLER_COMM__USING_ACCEL_FILTER
+// #define CONTROLLER_COMM__CHECKSUM
+
 #include "uart.h"
 #include "gpio.h"
-#include "acceleration.h"
+#ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
+    #include "accel_filter.h"
+#else
+    #include "acceleration.h"
+#endif
 #include "stdio.h"
 #include "stdbool.h"
 #include "queue.h"
@@ -29,7 +36,6 @@ extern "C" {
 const static uint32_t controller_comm__uart_baud_rate = 115200;
 const static uint8_t controller_comm__rx_queue_size = 10;
 const static uint8_t controller_comm__tx_queue_size = 10;
-// #define CONTROLLER_COMM__CHECKSUM
 #ifdef CONTROLLER_COMM__CHECKSUM
 const static uint32_t controller_comm__message_receive_timeout_ms = 10;
 #endif

@@ -22,8 +22,8 @@ controller_comm__message_s controller_comm__wait_on_next_message(controller_comm
     uint8_t message_data_byte1 = {0};
     uint8_t message_data_byte2 = {0};
 #ifdef CONTROLLER_COMM__CHECKSUM
-    uint8_t message_checksum_byte1               = {0};
-    uint8_t message_checksum_byte2               = {0};
+    uint8_t message_checksum_byte1 = {0};
+    uint8_t message_checksum_byte2 = {0};
 #endif
 
 #ifdef CONTROLLER_COMM__CHECKSUM
@@ -34,11 +34,11 @@ controller_comm__message_s controller_comm__wait_on_next_message(controller_comm
     uart__get(controller.uart, &message_checksum_byte1, controller_comm__message_receive_timeout_ms);
     uart__get(controller.uart, &message_checksum_byte2, controller_comm__message_receive_timeout_ms);
 #else
-    (void)xQueueReceive(controller.rx_queue, &recipient,              portMAX_DELAY);
-    (void)xQueueReceive(controller.rx_queue, &sender,                 portMAX_DELAY);
-    (void)xQueueReceive(controller.rx_queue, &message_type,           portMAX_DELAY);
-    (void)xQueueReceive(controller.rx_queue, &message_data_byte1,     portMAX_DELAY);
-    (void)xQueueReceive(controller.rx_queue, &message_data_byte2,     portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &recipient,          portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &sender,             portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &message_type,       portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &message_data_byte1, portMAX_DELAY);
+    (void)xQueueReceive(controller.rx_queue, &message_data_byte2, portMAX_DELAY);
 #endif
     controller_comm__message_s message = {0};
     message.recipient = (controller_comm__role_e) recipient;
@@ -57,11 +57,11 @@ bool controller_comm__send_message(controller_comm_s controller, controller_comm
     const uint8_t sender       = (uint8_t) (message.sender       & 0xFF);
     const uint8_t message_type = (uint8_t) (message.message_type & 0xFF);
 
-    (void)xQueueSend(controller.tx_queue, &recipient,            portMAX_DELAY);
-    (void)xQueueSend(controller.tx_queue, &sender,               portMAX_DELAY);
-    (void)xQueueSend(controller.tx_queue, &message_type,         portMAX_DELAY);
-    (void)xQueueSend(controller.tx_queue, &message_data_byte1,   portMAX_DELAY);
-    (void)xQueueSend(controller.tx_queue, &message_data_byte2,   portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &recipient,          portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &sender,             portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &message_type,       portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &message_data_byte1, portMAX_DELAY);
+    (void)xQueueSend(controller.tx_queue, &message_data_byte2, portMAX_DELAY);
     return true;
 }
 
@@ -77,7 +77,11 @@ bool controller_comm__handle_received_message(controller_comm_s controller, cont
             message_reply.recipient    = message.sender;
             message_reply.sender       = controller.role;
             message_reply.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL;
+#ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
+            message_reply.data         = accel_filter__get_position(); // TODO: which axis do we want?
+#else
             message_reply.data         = acceleration__get_data().x; // TODO: which axis do we want?
+#endif
             return controller_comm__send_message(controller, message_reply);
 
         } break;
@@ -116,9 +120,11 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     
     uart__init(uart, clock__get_peripheral_clock_hz(), controller_comm__uart_baud_rate);
     uart__enable_queues(controller.uart, controller.rx_queue, controller.tx_queue);
+#ifndef CONTROLLER_COMM__USING_ACCEL_FILTER
     if (role != CONTROLLER_COMM__ROLE_MASTER){
         (void)acceleration__init();
     }
+#endif
     return controller;
 }
 void controller_comm__freertos_task(void *controller_comm_struct){
@@ -141,7 +147,7 @@ void controller_comm__freertos_task(void *controller_comm_struct){
             break;
         }
         default:
-            fprintf(stderr, "Invalid controller_com role, task failed\n");
+            fprintf(stderr, "Invalid controller_comm role, task failed\n");
             return;
 
     }
