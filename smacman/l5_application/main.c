@@ -23,12 +23,24 @@ static void ball_task(void *params);
 typedef struct {
   int8_t row;
   int8_t col;
-  int8_t vx;
-  int8_t vy;
+  uint8_t vx;
+  uint8_t vy;
+  int8_t xDir;
+  int8_t yDir;
 } ball_s;
 
 static gpio_s led0, led1, led2, led3;
 static gpio_s switch0, switch1, switch2, switch3;
+
+static void increase_ball_x(ball_s *ball) {
+  ball->vx = (ball->vx == 4) ? ball->vx : (ball->vx + 1);
+  ball->vy = (ball->vy == 1) ? ball->vy : (ball->vy - 1);
+}
+
+static void decrease_ball_x(ball_s *ball) {
+  ball->vx = (ball->vx == 1) ? ball->vx : (ball->vx - 1);
+  ball->vy = (ball->vy == 4) ? ball->vy : (ball->vy + 1);
+}
 
 int main(void) {
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
@@ -84,39 +96,81 @@ static void display_task(void *params) {
 // Columns - along X-axis, Rows - along Y-axis
 static void ball_task(void *params) {
   ball_s ball;
+  static uint8_t count = 1;
   ball.row = matrix_width / 2;
   ball.col = matrix_height / 2;
   // Angle depends on the row selected at the begining
-  ball.vx = (rand() % 2 == 1) ? 1 : -1; // vx
-  ball.vy = (rand() % 2 == 1) ? 1 : -1; // vy
+  ball.vx = 1;
+  ball.vy = 1;
+  ball.xDir = rand() % 2 ? 1 : -1;
+  ball.yDir = rand() % 2 ? 1 : -1;
   while (1) {
     led_matrix__fill_frame_buffer_inside_grid();
-    ball.row += ball.vx;
-    ball.col += ball.vy;
+    count = (count < 4) ? count + 1 : 1;
 
-    if (ball.col == 6) {
-      if ((led_matrix__get_pixel(ball.row, 3) != 0) || (led_matrix__get_pixel(ball.row - 1, 3) != 0) ||
-          (led_matrix__get_pixel(ball.row + 1, 3) != 0)) { // covers 3 rows
-        printf("down : %d, row: %d \n", led_matrix__get_pixel(ball.row, 3), ball.row);
-        ball.vy = abs(ball.vy);
+    // Update x movement // Wall collision
+    if (count % (5 - ball.vx) == 0) {
+      ball.row = (ball.xDir > 0) ? ball.row + 1 : ball.row - 1; // left: right
+      // If wall collision then reverse the x direction
+      if (ball.row <= 3 || ball.row >= (matrix_width - 4)) {
+        ball.xDir = -ball.xDir;
       }
     }
-    if (ball.col == matrix_width - 8) {
-      if ((led_matrix__get_pixel(ball.row, matrix_width - 4) != 0) ||
-          (led_matrix__get_pixel(ball.row - 1, matrix_width - 4) != 0) ||
-          (led_matrix__get_pixel(ball.row + 1, matrix_width - 4) != 0)) {
-        printf("up : %d,  row: %d \n", led_matrix__get_pixel(ball.row, matrix_width - 4), ball.row);
-        ball.vy = -abs(ball.vy);
+
+    if (count % (5 - ball.vy) == 0) {
+      ball.col = (ball.yDir > 0) ? ball.col + 1 : ball.col - 1; // up:down
+
+      // Paddle Collision
+      bool left_blue = gpio__get(switch0);
+      bool right_blue = gpio__get(switch1);
+      bool left_green = gpio__get(switch2);
+      bool right_green = gpio__get(switch3);
+
+      if (ball.col == 6) {
+        if ((led_matrix__get_pixel(ball.row, 3) != 0) || (led_matrix__get_pixel(ball.row - 1, 3) != 0) ||
+            (led_matrix__get_pixel(ball.row + 1, 3) != 0)) { // covers 3 rows
+          printf("down : %d, row: %d \n", led_matrix__get_pixel(ball.row, 3), ball.row);
+          if ((right_blue && ball.xDir < 0) || (left_blue && ball.xDir > 0)) {
+            increase_ball_x(&ball);
+            // ball.vx = (ball.vx == 4) ? ball.vx : (ball.vx + 1);
+            // ball.vy = (ball.vy == 1) ? ball.vy : (ball.vy - 1);
+          }
+          if ((right_blue && ball.xDir > 0) || (left_blue && ball.xDir < 0)) {
+            decrease_ball_x(&ball);
+          }
+
+          ball.yDir = -ball.yDir;
+        }
       }
-    }
-    if (ball.row <= 3) {
-      ball.vx = abs(ball.vx);
-    }
-    if (ball.row >= matrix_width - 4) {
-      ball.vx = -abs(ball.vx);
+      if (ball.col == matrix_width - 8) {
+        if ((led_matrix__get_pixel(ball.row, matrix_width - 4) != 0) ||
+            (led_matrix__get_pixel(ball.row - 1, matrix_width - 4) != 0) ||
+            (led_matrix__get_pixel(ball.row + 1, matrix_width - 4) != 0)) {
+          printf("up : %d,  row: %d \n", led_matrix__get_pixel(ball.row, matrix_width - 4), ball.row);
+
+          if ((right_green && ball.xDir < 0) || (left_green && ball.xDir > 0)) {
+            increase_ball_x(&ball);
+            // ball.vx = (ball.vx == 4) ? ball.vx : (ball.vx + 1);
+            // ball.vy = (ball.vy == 1) ? ball.vy : (ball.vy - 1);
+          }
+          if ((right_green && ball.xDir > 0) || (left_green && ball.xDir < 0)) {
+            decrease_ball_x(&ball);
+          }
+
+          // if (right_green) {
+          //   ball.vx = (ball.vx == 4) ? ball.vx : (ball.vx + 1);
+          //   ball.vy = (ball.vy == 1) ? ball.vy : (ball.vy - 1);
+          // }
+          // if (left_green) {
+          //   ball.vx = (ball.vx == 1) ? ball.vx : (ball.vx - 1);
+          //   ball.vy = (ball.vy == 4) ? ball.vy : (ball.vy + 1);
+          // }
+          ball.yDir = -ball.yDir;
+        }
+      }
     }
     led_matrix__drawBall(ball.row, ball.col);
-    vTaskDelay(50);
+    vTaskDelay(25);
   }
 }
 
@@ -149,12 +203,12 @@ static void blue_paddle_task(void *params) {
     }
     if (right) {
       direction = RIGHT_DOWN;
-      switch (row_start + 15) { 
+      switch (row_start + 15) {
       case 18 ... matrix_width - 3:
         led_matrix__drawPaddle_blue(row_start + 15, col, direction);
         row_start--;
         break;
-      case 0 ... 17: 
+      case 0 ... 17:
         led_matrix__drawPaddle_blue(row_start + 15, col, direction);
         break;
       }
