@@ -227,26 +227,33 @@ void led_matrix__set_line5_ball(int row, int column, bool var_up, bool var_down,
 
 /**************Setting Lines for Ball - Ends*****************/
 
-void led_matrix__drawBall(int row, int column, led_matrix__direction_e direction) {
-  bool var_up = 0, var_down = 0, var_left = 0, var_right = 0;
+void led_matrix__drawBall(int row, int column) {
+  led_matrix__color_e ball_color = RED;
+  led_matrix__set_pixel(row, column, ball_color);
+  led_matrix__set_pixel(row, column - 1, ball_color);
+  led_matrix__set_pixel(row, column + 1, ball_color);
+  led_matrix__set_pixel(row, column - 2, ball_color);
+  led_matrix__set_pixel(row, column + 2, ball_color);
 
-  if (direction == LEFT_UP || direction == LEFT_DOWN) {
-    var_left = 1;
-  }
-  if (direction == UP_RIGHT || direction == UP_LEFT) {
-    var_up = 1;
-  }
-  if (direction == RIGHT_DOWN || direction == RIGHT_UP) {
-    var_right = 1;
-  }
-  if (direction == DOWN_LEFT || direction == DOWN_RIGHT) {
-    var_down = 1;
-  }
-  led_matrix__set_line1_ball(row, column, var_up, var_down, var_left, var_right);
-  led_matrix__set_line2_ball(row, column, var_up, var_down, var_left, var_right);
-  led_matrix__set_line3_ball(row, column, var_up, var_down, var_left, var_right);
-  led_matrix__set_line4_ball(row, column, var_up, var_down, var_left, var_right);
-  led_matrix__set_line5_ball(row, column, var_up, var_down, var_left, var_right);
+  led_matrix__set_pixel(row - 1, column, ball_color);
+  led_matrix__set_pixel(row - 1, column - 1, ball_color);
+  led_matrix__set_pixel(row - 1, column + 1, ball_color);
+  led_matrix__set_pixel(row - 1, column - 2, ball_color);
+  led_matrix__set_pixel(row - 1, column + 2, ball_color);
+
+  led_matrix__set_pixel(row + 1, column, ball_color);
+  led_matrix__set_pixel(row + 1, column - 1, ball_color);
+  led_matrix__set_pixel(row + 1, column + 1, ball_color);
+  led_matrix__set_pixel(row + 1, column - 2, ball_color);
+  led_matrix__set_pixel(row + 1, column + 2, ball_color);
+
+  led_matrix__set_pixel(row - 2, column, ball_color);
+  led_matrix__set_pixel(row - 2, column - 1, ball_color);
+  led_matrix__set_pixel(row - 2, column + 1, ball_color);
+
+  led_matrix__set_pixel(row + 2, column, ball_color);
+  led_matrix__set_pixel(row + 2, column - 1, ball_color);
+  led_matrix__set_pixel(row + 2, column + 1, ball_color);
 }
 
 /**************Setting Lines for Pacman - Ends*****************/

@@ -75,6 +75,17 @@ void led_matrix__clear_pixel(int row, int column) {
   frame_buffer[row][BLUE_PLANE] &= pixel;
 }
 
+bool led_matrix__get_pixel(int row, int column) {
+  bool val = 0;
+  if (frame_buffer[row][RED_PLANE] & ((uint64_t)1 << column))
+    val = 1;
+  else if (frame_buffer[row][GREEN_PLANE] & ((uint64_t)1 << column))
+    val = 1;
+  else if (frame_buffer[row][BLUE_PLANE] & ((uint64_t)1 << column))
+    val = 1;
+  return val;
+}
+
 void led_matrix__set_pixel(int row, int col, led_matrix__color_e color) {
   uint64_t pixel = ((uint64_t)1 << col);
   if (color & 0x01) {
@@ -113,7 +124,7 @@ void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color) {
 }
 
 void led_matrix__fill_frame_buffer_inside_grid() {
-  data_size data = ~((data_size)0x3FFFFFFFFFFFFFFC);
+  data_size data = ~((data_size)0x0FFFFFFFFFFFFFF0);
   for (int i = 2; i < (matrix_width - 2); i++) {
     frame_buffer[i][RED_PLANE] &= data;
     frame_buffer[i][GREEN_PLANE] &= data;

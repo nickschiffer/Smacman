@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "acceleration.h"
 #include "board_io.h"
 #include "common_macros.h"
 #include "gpio.h"
@@ -20,29 +21,36 @@ static void display_task(void *params);
 static void ball_task(void *params);
 
 typedef struct {
-  int row;
-  int col;
-  int vx;
-  int vy;
+  int8_t row;
+  int8_t col;
+  int8_t vx;
+  int8_t vy;
 } ball_s;
 
 static gpio_s led0, led1, led2, led3;
-// static ball_s ball;
+static gpio_s switch0, switch1, switch2, switch3;
 
 int main(void) {
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
   led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
   led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
   led3 = gpio__construct_as_output(GPIO__PORT_2, 3);
+  switch0 = gpio__construct_as_input(GPIO__PORT_0, 29);
+  switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
+  switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
+  switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
+  // LPC_IOCON->P1_15 |= (1 << 3);
+  // LPC_IOCON->P1_19 |= (1 << 3);
   gpio__set(led0);
   gpio__set(led1);
   gpio__set(led2);
   gpio__set(led3);
   led_matrix__init();
-  time_t t;
-  srand(time(&t));
-  xTaskCreate(blue_pacman_task, "blue_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
-  xTaskCreate(green_pacman_task, "green_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
+  acceleration__axis_data_s sensor_avg_value;
+  sensor_avg_value = acceleration__get_data();
+  srand(sensor_avg_value.x + sensor_avg_value.z);
+  // xTaskCreate(blue_pacman_task, "blue_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
+  // xTaskCreate(green_pacman_task, "green_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(blue_paddle_task, "paddle_blue", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(green_paddle_task, "paddle_green", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(ball_task, "ball", (2048U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
@@ -66,41 +74,88 @@ int main(void) {
 // Position and the velocity of the ball
 
 static void display_task(void *params) {
-   led_matrix__displayGridBorders(PINK);
+  led_matrix__displayGridBorders(PINK);
   while (true) {
     led_matrix__update_display();
     vTaskDelay(5);
   }
 }
 
+// Columns - along X-axis, Rows - along Y-axis
+static void ball_task(void *params) {
+  ball_s ball;
+  ball.row = matrix_width / 2;
+  ball.col = matrix_height / 2;
+  // Angle depends on the row selected at the begining
+  ball.vx = (rand() % 2 == 1) ? 1 : -1; // vx
+  ball.vy = (rand() % 2 == 1) ? 1 : -1; // vy
+  while (1) {
+    led_matrix__fill_frame_buffer_inside_grid();
+    ball.row += ball.vx;
+    ball.col += ball.vy;
+
+    if (ball.col == 6) {
+      if ((led_matrix__get_pixel(ball.row, 3) != 0) || (led_matrix__get_pixel(ball.row - 1, 3) != 0) ||
+          (led_matrix__get_pixel(ball.row + 1, 3) != 0)) { // covers 3 rows
+        printf("down : %d, row: %d \n", led_matrix__get_pixel(ball.row, 3), ball.row);
+        ball.vy = abs(ball.vy);
+      }
+    }
+    if (ball.col == matrix_width - 8) {
+      if ((led_matrix__get_pixel(ball.row, matrix_width - 4) != 0) ||
+          (led_matrix__get_pixel(ball.row - 1, matrix_width - 4) != 0) ||
+          (led_matrix__get_pixel(ball.row + 1, matrix_width - 4) != 0)) {
+        printf("up : %d,  row: %d \n", led_matrix__get_pixel(ball.row, matrix_width - 4), ball.row);
+        ball.vy = -abs(ball.vy);
+      }
+    }
+    if (ball.row <= 3) {
+      ball.vx = abs(ball.vx);
+    }
+    if (ball.row >= matrix_width - 4) {
+      ball.vx = -abs(ball.vx);
+    }
+    led_matrix__drawBall(ball.row, ball.col);
+    vTaskDelay(50);
+  }
+}
+
 // Blue paddle - at the bottom. Directions: LEFT_DOWN, RIGHT_DOWN
 // Length of the paddle is 16
 static void blue_paddle_task(void *params) {
-  int row_right = matrix_width - 3, row_left = 2;
+  int row_start = matrix_width / 4;
   int col = 2;
-  led_matrix__direction_e direction = LEFT_DOWN;
+  for (int i = 0; i < 16; i++) {
+    led_matrix__set_pixel(row_start + i, col, BLUE);
+    led_matrix__set_pixel(row_start + i, col + 1, BLUE);
+  }
+
+  bool left = 0, right = 0;
+  led_matrix__direction_e direction;
   while (true) {
-    if (direction == LEFT_DOWN) {
-      switch (row_left) {
+    left = gpio__get(switch0);
+    right = gpio__get(switch1);
+    if (left) {
+      direction = LEFT_DOWN;
+      switch (row_start) {
       case 2 ... matrix_width - 19:
-        led_matrix__drawPaddle_blue(row_left, col, direction);
-        row_left++;
+        led_matrix__drawPaddle_blue(row_start, col, direction);
+        row_start++;
         break;
       case matrix_width - 18 ... matrix_width: // Check this condition
-        direction = RIGHT_DOWN;
-        row_left = 2;
+        led_matrix__drawPaddle_blue(row_start, col, direction);
         break;
       }
     }
-    if (direction == RIGHT_DOWN) {
-      switch (row_right) {
-      case 17 ... matrix_width - 3:
-        led_matrix__drawPaddle_blue(row_right, col, direction);
-        row_right--;
+    if (right) {
+      direction = RIGHT_DOWN;
+      switch (row_start + 15) { 
+      case 18 ... matrix_width - 3:
+        led_matrix__drawPaddle_blue(row_start + 15, col, direction);
+        row_start--;
         break;
-      case 0 ... 16: // Check this condition
-        direction = LEFT_DOWN;
-        row_right = matrix_width - 3;
+      case 0 ... 17: 
+        led_matrix__drawPaddle_blue(row_start + 15, col, direction);
         break;
       }
     }
@@ -112,32 +167,38 @@ static void blue_paddle_task(void *params) {
 // Green paddle - at the top. Directions: LEFT_UP, RIGHT_UP
 // Length of the paddle is 16
 static void green_paddle_task(void *params) {
-  int row_right = matrix_width - 3, row_left = 2;
+  int row_start = matrix_width / 4;
   int col = matrix_height - 3;
-  led_matrix__direction_e direction = LEFT_UP;
+  for (int i = 0; i < 16; i++) {
+    led_matrix__set_pixel(matrix_width / 4 + i, col, GREEN);
+    led_matrix__set_pixel(matrix_width / 4 + i, col - 1, GREEN);
+  }
+  bool left = 0, right = 0;
+  led_matrix__direction_e direction;
   while (true) {
-    //
-    if (direction == LEFT_UP) {
-      switch (row_left) {
+    left = gpio__get(switch2);
+    right = gpio__get(switch3);
+    if (left) {
+      direction = LEFT_UP;
+      switch (row_start) {
       case 2 ... matrix_width - 19:
-        led_matrix__drawPaddle_green(row_left, col, direction);
-        row_left++;
+        led_matrix__drawPaddle_green(row_start, col, direction);
+        row_start++;
         break;
       case matrix_width - 18 ... matrix_width:
-        direction = RIGHT_UP;
-        row_left = 2;
+        led_matrix__drawPaddle_green(row_start, col, direction);
         break;
       }
     }
-    if (direction == RIGHT_UP) {
-      switch (row_right) {
-      case 17 ... matrix_width - 3:
-        led_matrix__drawPaddle_green(row_right, col, direction);
-        row_right--;
+    if (right) {
+      direction = RIGHT_UP;
+      switch (row_start + 15) {
+      case 18 ... matrix_width - 3:
+        led_matrix__drawPaddle_green(row_start + 15, col, direction);
+        row_start--;
         break;
-      case 0 ... 16:
-        direction = LEFT_UP;
-        row_right = matrix_width - 3;
+      case 0 ... 17:
+        led_matrix__drawPaddle_green(row_start + 15, col, direction);
         break;
       }
     }
