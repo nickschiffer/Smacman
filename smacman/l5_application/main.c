@@ -42,6 +42,14 @@ static void decrease_ball_x(ball_s *ball) {
   ball->vy = (ball->vy == 4) ? ball->vy : (ball->vy + 1);
 }
 
+static void ball_setup(ball_s *ball) {
+  ball->row = matrix_width / 2;
+  ball->col = matrix_height / 2;
+  ball->vx = 1;
+  ball->vy = 1;
+  ball->xDir = rand() % 2 ? 1 : -1;
+  ball->yDir = rand() % 2 ? 1 : -1;
+}
 int main(void) {
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
   led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
@@ -61,8 +69,8 @@ int main(void) {
   acceleration__axis_data_s sensor_avg_value;
   sensor_avg_value = acceleration__get_data();
   srand(sensor_avg_value.x + sensor_avg_value.z);
-  // xTaskCreate(blue_pacman_task, "blue_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
-  // xTaskCreate(green_pacman_task, "green_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
+  xTaskCreate(blue_pacman_task, "blue_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
+  xTaskCreate(green_pacman_task, "green_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(blue_paddle_task, "paddle_blue", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(green_paddle_task, "paddle_green", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(ball_task, "ball", (2048U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
@@ -97,13 +105,10 @@ static void display_task(void *params) {
 static void ball_task(void *params) {
   ball_s ball;
   static uint8_t count = 1;
-  ball.row = matrix_width / 2;
-  ball.col = matrix_height / 2;
-  // Angle depends on the row selected at the begining
-  ball.vx = 1;
-  ball.vy = 1;
-  ball.xDir = rand() % 2 ? 1 : -1;
-  ball.yDir = rand() % 2 ? 1 : -1;
+  ball_setup(&ball);
+  uint8_t score_blue = 0;
+  uint8_t score_green = 0;
+  uint8_t cummulative_score = 1;
   while (1) {
     led_matrix__fill_frame_buffer_inside_grid();
     count = (count < 4) ? count + 1 : 1;
@@ -129,44 +134,49 @@ static void ball_task(void *params) {
       if (ball.col == 6) {
         if ((led_matrix__get_pixel(ball.row, 3) != 0) || (led_matrix__get_pixel(ball.row - 1, 3) != 0) ||
             (led_matrix__get_pixel(ball.row + 1, 3) != 0)) { // covers 3 rows
-          printf("down : %d, row: %d \n", led_matrix__get_pixel(ball.row, 3), ball.row);
+          // printf("down : %d, row: %d \n", led_matrix__get_pixel(ball.row, 3), ball.row);
           if ((right_blue && ball.xDir < 0) || (left_blue && ball.xDir > 0)) {
             increase_ball_x(&ball);
-            // ball.vx = (ball.vx == 4) ? ball.vx : (ball.vx + 1);
-            // ball.vy = (ball.vy == 1) ? ball.vy : (ball.vy - 1);
           }
           if ((right_blue && ball.xDir > 0) || (left_blue && ball.xDir < 0)) {
             decrease_ball_x(&ball);
           }
-
           ball.yDir = -ball.yDir;
+          cummulative_score++;
+          printf("Score to grab: %d \n", cummulative_score);
         }
       }
-      if (ball.col == matrix_width - 8) {
+      // oppponent scores
+      if (ball.col == 3) {
+        score_green += cummulative_score;
+        cummulative_score = 1;
+        printf("GREEN player scored\n");
+        printf("BLUE player score: %d   GREEN player score: %d\n", score_blue, score_green);
+        ball_setup(&ball);
+      }
+      if (ball.col == matrix_width - 7) {
         if ((led_matrix__get_pixel(ball.row, matrix_width - 4) != 0) ||
             (led_matrix__get_pixel(ball.row - 1, matrix_width - 4) != 0) ||
             (led_matrix__get_pixel(ball.row + 1, matrix_width - 4) != 0)) {
-          printf("up : %d,  row: %d \n", led_matrix__get_pixel(ball.row, matrix_width - 4), ball.row);
-
+          // printf("up : %d,  row: %d \n", led_matrix__get_pixel(ball.row, matrix_width - 4), ball.row);
           if ((right_green && ball.xDir < 0) || (left_green && ball.xDir > 0)) {
             increase_ball_x(&ball);
-            // ball.vx = (ball.vx == 4) ? ball.vx : (ball.vx + 1);
-            // ball.vy = (ball.vy == 1) ? ball.vy : (ball.vy - 1);
           }
           if ((right_green && ball.xDir > 0) || (left_green && ball.xDir < 0)) {
             decrease_ball_x(&ball);
           }
-
-          // if (right_green) {
-          //   ball.vx = (ball.vx == 4) ? ball.vx : (ball.vx + 1);
-          //   ball.vy = (ball.vy == 1) ? ball.vy : (ball.vy - 1);
-          // }
-          // if (left_green) {
-          //   ball.vx = (ball.vx == 1) ? ball.vx : (ball.vx - 1);
-          //   ball.vy = (ball.vy == 4) ? ball.vy : (ball.vy + 1);
-          // }
           ball.yDir = -ball.yDir;
+          cummulative_score++;
+          printf("Score to grab: %d \n", cummulative_score);
         }
+      }
+
+      if (ball.col == matrix_width - 4) {
+        score_blue += cummulative_score;
+        cummulative_score = 1;
+        printf("BLUE player scored\n");
+        printf("BLUE player score: %d   GREEN player score: %d\n", score_blue, score_green);
+        ball_setup(&ball);
       }
     }
     led_matrix__drawBall(ball.row, ball.col);
