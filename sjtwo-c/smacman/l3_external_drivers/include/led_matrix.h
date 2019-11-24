@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define matrix_height 64UL
+#define matrix_width 64UL
+#define row_bound 32UL
+#define data_size uint64_t
+
 /**
  * r1,g1,b1 --> for first  32 rows
  * r2,g2,b2 --> for second 32 rows
@@ -29,7 +34,18 @@ typedef enum { // RGB (000 => Off)
 
 typedef enum { RED_PLANE, GREEN_PLANE, BLUE_PLANE } led_matrix__color_plane_e;
 
-uint64_t frame_buffer[64][3];
+typedef enum {
+  LEFT_UP,
+  LEFT_DOWN,
+  RIGHT_UP,
+  RIGHT_DOWN,
+  UP_RIGHT,
+  UP_LEFT,
+  DOWN_RIGHT,
+  DOWN_LEFT
+} led_matrix__direction_e;
+
+data_size frame_buffer[64][3];
 
 void led_matrix__init();
 void led_matrix__enable_display();
