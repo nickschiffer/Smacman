@@ -32,7 +32,7 @@ const static uint32_t accel_filter__sampling_length       = 100;
  *                      P U B L I C    F U N C T I O N S
  *
  ******************************************************************************/
-void accel_filter__freertos_task(void);
+void accel_filter__freertos_task(void *pvParams);
 uint16_t accel_filter__get_position(void);
 
 #ifdef __cplusplus

@@ -189,7 +189,8 @@ void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
    */
   const uint32_t default_reset_fdr_value = (1 << 4);
   uart_regs->FDR = default_reset_fdr_value;
-  uart_regs->LCR = eight_bit_datalen | stop_bits_is_2; // DLAB is reset back to zero also
+  // uart_regs->LCR = eight_bit_datalen | stop_bits_is_2; // DLAB is reset back to zero also
+  uart_regs->LCR = eight_bit_datalen;
 }
 
 bool uart__is_initialized(uart_e uart) {

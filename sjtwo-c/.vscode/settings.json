@@ -1,5 +1,7 @@
 {
     "files.associations": {
+        "SConstruct": "python",
+        "SConscript": "python",
         "lpc40xx.h": "c",
         "a_adc.h": "c",
         "a_interrupt.h": "c",
@@ -20,7 +22,12 @@
         "ff.h": "c",
         "filesystem": "c",
         "my_gpio.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "uart.h": "c",
+        "cstring": "c",
+        "*.def": "c",
+        "__bit_reference": "c",
+        "__string": "c"
     },
     "python.pythonPath": "/usr/bin/python3"
 }

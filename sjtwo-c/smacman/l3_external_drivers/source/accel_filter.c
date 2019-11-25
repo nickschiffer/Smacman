@@ -17,7 +17,7 @@ uint16_t accel_filter__get_position(void) {
     return position;
 }
 
-void accel_filter__freertos_task(void){
+void accel_filter__freertos_task(void *pvParams){
     bool accel_init_status = acceleration__init(); 
     assert(true == accel_init_status);
     while (1) {
