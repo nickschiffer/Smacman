@@ -176,7 +176,7 @@ void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
   const uint8_t eight_bit_datalen = 3;
 
   // 2-stop bits helps improve baud rate error; you can remove this if bandwidth is critical to you
-  const uint8_t stop_bits_is_2 = (1 << 2);
+  // const uint8_t stop_bits_is_2 = (1 << 2);
 
   lpc_uart *uart_regs = uarts[uart].registers;
 

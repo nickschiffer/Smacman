@@ -43,7 +43,6 @@ const static uint32_t controller_comm__message_receive_timeout_ms      = 10;
 const static uint8_t  controller_comm__message_start_byte              = 0xDE;
 const static uint8_t  controller_comm__message_stop_byte               = 0xAD;
 const static uint32_t controller_comm__master_rx_retry_threshold       = 10;
-const static uint8_t  controller_comm__score_send_queue_size           = 3;
 
 /*******************************************************************************
  *
@@ -60,6 +59,7 @@ typedef enum {
 typedef enum {
     CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL,
     CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL,
+    CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED,
     CONTROLLER_COMM__MESSAGE_TYPE_UPDATE_SCORE,
 } controller_comm__message_type_e;
 
@@ -97,11 +97,6 @@ typedef struct {
 #endif
 } controller_comm__message_s;
 
-typedef struct {
-    controller_comm__role_e player;
-    uint16_t score;
-} controller_comm__score_update_s;
-
 /*******************************************************************************
  *
  *                      P U B L I C    F U N C T I O N S
@@ -110,7 +105,7 @@ typedef struct {
 controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uart);
 uint16_t controller_comm__get_player_1_accel();
 uint16_t controller_comm__get_player_2_accel();
-bool controller_com__send_score_to_player(controller_comm__role_e role, uint16_t score);
+bool controller_comm__update_player_score(controller_comm__role_e player, uint8_t score);
 void controller_comm__freertos_task(void *controller_comm_struct);
 
 #ifdef __cplusplus
