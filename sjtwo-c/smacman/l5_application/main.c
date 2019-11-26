@@ -22,7 +22,7 @@ static void ball_task(void *params);
 static gpio_s led0, led1, led2, led3;
 static gpio_s switch0, switch1, switch2, switch3;
 
-int main(void) {
+static void smacman__startup(){
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
   led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
   led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
@@ -31,6 +31,18 @@ int main(void) {
   switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
   switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
   switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
+  
+  gpio__set(led0);
+  gpio__set(led1);
+  gpio__set(led2);
+  gpio__set(led3);
+
+  
+  led_matrix__init();
+}
+
+int main(void) {
+  
 
   // switch0 = gpio__construct_with_function(GPIO__PORT_0, 29, GPIO__FUNCITON_0_IO_PIN);
   // switch1 = gpio__construct_with_function(GPIO__PORT_0, 30, GPIO__FUNCITON_0_IO_PIN);
@@ -43,11 +55,6 @@ int main(void) {
   
   // LPC_IOCON->P1_15 |= (1 << 3);
   // LPC_IOCON->P1_19 |= (1 << 3);
-  gpio__set(led0);
-  gpio__set(led1);
-  gpio__set(led2);
-  gpio__set(led3);
-  led_matrix__init();
   acceleration__axis_data_s sensor_avg_value;
   sensor_avg_value = acceleration__get_data();
   srand(sensor_avg_value.x + sensor_avg_value.z);
