@@ -24,5 +24,3 @@ void led_matrix__set_line2_ball(int row, int column, bool var_up, bool var_down,
 void led_matrix__set_line3_ball(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right);
 void led_matrix__set_line4_ball(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right);
 void led_matrix__set_line5_ball(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right);
-
-void led_matrix__cleanBall(int row, int column);

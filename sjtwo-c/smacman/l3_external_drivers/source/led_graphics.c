@@ -225,35 +225,6 @@ void led_matrix__set_line5_ball(int row, int column, bool var_up, bool var_down,
   }
 }
 
-void led_matrix__cleanBall(int row, int column) {
-  led_matrix__color_e ball_color = RED;
-  led_matrix__clear_pixel(row, column);
-  led_matrix__clear_pixel(row, column - 1);
-  led_matrix__clear_pixel(row, column + 1);
-  led_matrix__clear_pixel(row, column - 2);
-  led_matrix__clear_pixel(row, column + 2);
-
-  led_matrix__clear_pixel(row - 1, column);
-  led_matrix__clear_pixel(row - 1, column - 1);
-  led_matrix__clear_pixel(row - 1, column + 1);
-  led_matrix__clear_pixel(row - 1, column - 2);
-  led_matrix__clear_pixel(row - 1, column + 2);
-
-  led_matrix__clear_pixel(row + 1, column);
-  led_matrix__clear_pixel(row + 1, column - 1);
-  led_matrix__clear_pixel(row + 1, column + 1);
-  led_matrix__clear_pixel(row + 1, column - 2);
-  led_matrix__clear_pixel(row + 1, column + 2);
-
-  led_matrix__clear_pixel(row - 2, column);
-  led_matrix__clear_pixel(row - 2, column - 1);
-  led_matrix__clear_pixel(row - 2, column + 1);
-
-  led_matrix__clear_pixel(row + 2, column);
-  led_matrix__clear_pixel(row + 2, column - 1);
-  led_matrix__clear_pixel(row + 2, column + 1);
-}
-
 /**************Setting Lines for Ball - Ends*****************/
 
 void led_matrix__drawBall(int row, int column) {

@@ -9,8 +9,7 @@
 #include "gpio.h"
 #include "sj2_cli.h"
 
-#include "led_graphics.h"
-#include "led_matrix.h"
+#include "game_graphics.h"
 
 static void blue_pacman_task(void *params);
 static void green_pacman_task(void *params);
@@ -20,36 +19,9 @@ static void ball_task(void *params);
 static void display_task(void *params);
 static void ball_task(void *params);
 
-typedef struct {
-  int8_t row;
-  int8_t col;
-  uint8_t vx;
-  uint8_t vy;
-  int8_t xDir;
-  int8_t yDir;
-} ball_s;
-
 static gpio_s led0, led1, led2, led3;
 static gpio_s switch0, switch1, switch2, switch3;
 
-static void increase_ball_x(ball_s *ball) {
-  ball->vx = (ball->vx == 4) ? ball->vx : (ball->vx + 1);
-  ball->vy = (ball->vy == 1) ? ball->vy : (ball->vy - 1);
-}
-
-static void decrease_ball_x(ball_s *ball) {
-  ball->vx = (ball->vx == 1) ? ball->vx : (ball->vx - 1);
-  ball->vy = (ball->vy == 4) ? ball->vy : (ball->vy + 1);
-}
-
-static void ball_setup(ball_s *ball) {
-  ball->row = matrix_width / 2;
-  ball->col = matrix_height / 2;
-  ball->vx = 1;
-  ball->vy = 1;
-  ball->xDir = rand() % 2 ? 1 : -1;
-  ball->yDir = rand() % 2 ? 1 : -1;
-}
 int main(void) {
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
   led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
@@ -59,6 +31,16 @@ int main(void) {
   switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
   switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
   switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
+
+  // switch0 = gpio__construct_with_function(GPIO__PORT_0, 29, GPIO__FUNCITON_0_IO_PIN);
+  // switch1 = gpio__construct_with_function(GPIO__PORT_0, 30, GPIO__FUNCITON_0_IO_PIN);
+  // switch2 = gpio__construct_with_function(GPIO__PORT_1, 15, GPIO__FUNCITON_0_IO_PIN);
+  // switch3 = gpio__construct_with_function(GPIO__PORT_1, 19, GPIO__FUNCITON_0_IO_PIN);
+  // gpio__set_as_input(switch0);
+  // gpio__set_as_input(switch1);
+  // gpio__set_as_input(switch2);
+  // gpio__set_as_input(switch3);
+  
   // LPC_IOCON->P1_15 |= (1 << 3);
   // LPC_IOCON->P1_19 |= (1 << 3);
   gpio__set(led0);
@@ -69,8 +51,8 @@ int main(void) {
   acceleration__axis_data_s sensor_avg_value;
   sensor_avg_value = acceleration__get_data();
   srand(sensor_avg_value.x + sensor_avg_value.z);
-  xTaskCreate(blue_pacman_task, "blue_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
-  xTaskCreate(green_pacman_task, "green_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
+  xTaskCreate(blue_pacman_task, "blue_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
+  xTaskCreate(green_pacman_task, "green_pacman", (2048U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
   xTaskCreate(blue_paddle_task, "paddle_blue", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(green_paddle_task, "paddle_green", (2048U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
   xTaskCreate(ball_task, "ball", (2048U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
@@ -181,7 +163,7 @@ static void ball_task(void *params) {
         ball_setup(&ball);
       }
     }
-    led_matrix__drawBall(ball.row, ball.col);
+    detect_collision(ball);
     vTaskDelay(25);
   }
 }
@@ -286,11 +268,12 @@ static void blue_pacman_task(void *params) {
   led_matrix__direction_e direction = LEFT_UP;
 
   while (true) {
-    led_matrix__fill_frame_buffer_inside_grid_upper_half();
+    led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
+
     if (direction == LEFT_UP) {
       switch (row_left_upordown) {
       case 2 ... matrix_width - 8:
-        led_matrix__drawPackMan(row_left_upordown, col_leftorrigt_up, direction, packman_color);
+        game_graphics_packman(row_left_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         row_left_upordown++;
         break;
@@ -308,7 +291,7 @@ static void blue_pacman_task(void *params) {
     if (direction == RIGHT_UP) {
       switch (row_right_upordown) {
       case 7 ... matrix_width - 3:
-        led_matrix__drawPackMan(row_right_upordown, col_leftorrigt_up, direction, packman_color);
+        game_graphics_packman(row_right_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         row_right_upordown--;
         break;
@@ -326,7 +309,7 @@ static void blue_pacman_task(void *params) {
     if (direction == DOWN_LEFT) {
       switch (col_down_leftorright) {
       case (matrix_height / 2) + 5 ... matrix_height - 5:
-        led_matrix__drawPackMan(row_upordown_left, col_down_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_left, col_down_leftorright, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         col_down_leftorright--;
         break;
@@ -344,7 +327,7 @@ static void blue_pacman_task(void *params) {
     if (direction == UP_LEFT) {
       switch (col_up_leftorright) {
       case (matrix_height / 2)... matrix_width - 10:
-        led_matrix__drawPackMan(row_upordown_left, col_up_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_left, col_up_leftorright, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         col_up_leftorright++;
         break;
@@ -363,7 +346,7 @@ static void blue_pacman_task(void *params) {
     if (direction == RIGHT_DOWN) {
       switch (row_right_upordown) {
       case 7 ... matrix_height - 3:
-        led_matrix__drawPackMan(row_right_upordown, col_leftorrigt_down, direction, packman_color);
+        game_graphics_packman(row_right_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         row_right_upordown--;
         break;
@@ -381,7 +364,7 @@ static void blue_pacman_task(void *params) {
     if (direction == LEFT_DOWN) {
       switch (row_left_upordown) {
       case 2 ... matrix_width - 8:
-        led_matrix__drawPackMan(row_left_upordown, col_leftorrigt_down, direction, packman_color);
+        game_graphics_packman(row_left_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         row_left_upordown++;
         break;
@@ -400,7 +383,7 @@ static void blue_pacman_task(void *params) {
     if (direction == UP_RIGHT) {
       switch (col_up_leftorright) {
       case (matrix_height / 2)... matrix_height - 10:
-        led_matrix__drawPackMan(row_upordown_right, col_up_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_right, col_up_leftorright, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         col_up_leftorright++;
         break;
@@ -418,7 +401,7 @@ static void blue_pacman_task(void *params) {
     if (direction == DOWN_RIGHT) {
       switch (col_down_leftorright) {
       case (matrix_height / 2) + 5 ... matrix_height - 5:
-        led_matrix__drawPackMan(row_upordown_right, col_down_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_right, col_down_leftorright, direction, packman_color, PLAYER_1);
         // led_matrix__update_display();
         col_down_leftorright--;
         break;
@@ -434,7 +417,7 @@ static void blue_pacman_task(void *params) {
       }
     }
 
-    vTaskDelay(25);
+    vTaskDelay(200);
   }
 }
 
@@ -448,11 +431,11 @@ static void green_pacman_task(void *params) {
   led_matrix__direction_e direction = LEFT_UP;
 
   while (true) {
-    led_matrix__fill_frame_buffer_inside_grid_lower_half();
+    led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
     if (direction == LEFT_UP) {
       switch (row_left_upordown) {
       case 2 ... matrix_width - 8:
-        led_matrix__drawPackMan(row_left_upordown, col_leftorrigt_up, direction, packman_color);
+        game_graphics_packman(row_left_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         row_left_upordown++;
         break;
@@ -470,7 +453,7 @@ static void green_pacman_task(void *params) {
     if (direction == RIGHT_UP) {
       switch (row_right_upordown) {
       case 7 ... matrix_width - 3:
-        led_matrix__drawPackMan(row_right_upordown, col_leftorrigt_up, direction, packman_color);
+        game_graphics_packman(row_right_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         row_right_upordown--;
         break;
@@ -488,7 +471,7 @@ static void green_pacman_task(void *params) {
     if (direction == DOWN_LEFT) {
       switch (col_down_leftorright) {
       case 9 ...(matrix_height / 2) - 1:
-        led_matrix__drawPackMan(row_upordown_left, col_down_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_left, col_down_leftorright, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         col_down_leftorright--;
         break;
@@ -506,7 +489,7 @@ static void green_pacman_task(void *params) {
     if (direction == UP_LEFT) {
       switch (col_up_leftorright) {
       case 4 ...(matrix_height / 2) - 6:
-        led_matrix__drawPackMan(row_upordown_left, col_up_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_left, col_up_leftorright, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         col_up_leftorright++;
         break;
@@ -525,7 +508,7 @@ static void green_pacman_task(void *params) {
     if (direction == RIGHT_DOWN) {
       switch (row_right_upordown) {
       case 7 ... matrix_height - 3:
-        led_matrix__drawPackMan(row_right_upordown, col_leftorrigt_down, direction, packman_color);
+        game_graphics_packman(row_right_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         row_right_upordown--;
         break;
@@ -543,7 +526,7 @@ static void green_pacman_task(void *params) {
     if (direction == LEFT_DOWN) {
       switch (row_left_upordown) {
       case 2 ... matrix_width - 8:
-        led_matrix__drawPackMan(row_left_upordown, col_leftorrigt_down, direction, packman_color);
+        game_graphics_packman(row_left_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         row_left_upordown++;
         break;
@@ -562,7 +545,7 @@ static void green_pacman_task(void *params) {
     if (direction == UP_RIGHT) {
       switch (col_up_leftorright) {
       case 4 ...(matrix_height / 2) - 6:
-        led_matrix__drawPackMan(row_upordown_right, col_up_leftorright, direction, packman_color);
+        game_graphics_packman(row_upordown_right, col_up_leftorright, direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
         col_up_leftorright++;
         break;
@@ -580,8 +563,8 @@ static void green_pacman_task(void *params) {
     if (direction == DOWN_RIGHT) {
       switch (col_down_leftorright) {
       case 9 ...(matrix_height / 2) - 1:
-        led_matrix__drawPackMan(row_upordown_right, col_down_leftorright, direction, packman_color);
-        // led_matrix__update_display();
+        game_graphics_packman(row_upordown_right, col_down_leftorright, direction, packman_color,
+                              PLAYER_2); // led_matrix__update_display();
         col_down_leftorright--;
         break;
       case 0 ... 8:
@@ -596,6 +579,6 @@ static void green_pacman_task(void *params) {
       }
     }
 
-    vTaskDelay(25);
+    vTaskDelay(200);
   }
 }
