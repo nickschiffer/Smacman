@@ -11,6 +11,8 @@
 
 #include "game_graphics.h"
 
+static void smacman__startup(void);
+
 static void blue_pacman_task(void *params);
 static void green_pacman_task(void *params);
 static void blue_paddle_task(void *params);
@@ -22,24 +24,7 @@ static void ball_task(void *params);
 static gpio_s led0, led1, led2, led3;
 static gpio_s switch0, switch1, switch2, switch3;
 
-static void smacman__startup(){
-  led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
-  led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
-  led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
-  led3 = gpio__construct_as_output(GPIO__PORT_2, 3);
-  switch0 = gpio__construct_as_input(GPIO__PORT_0, 29);
-  switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
-  switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
-  switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
-  
-  gpio__set(led0);
-  gpio__set(led1);
-  gpio__set(led2);
-  gpio__set(led3);
 
-  
-  led_matrix__init();
-}
 
 int main(void) {
   
@@ -81,6 +66,11 @@ int main(void) {
 }
 
 // Position and the velocity of the ball
+
+static void master_task(void *params){
+  int state = (int) *params;
+
+}
 
 static void display_task(void *params) {
   led_matrix__displayGridBorders(PINK);
@@ -588,4 +578,23 @@ static void green_pacman_task(void *params) {
 
     vTaskDelay(200);
   }
+}
+
+static void smacman__startup(void){
+  led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
+  led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
+  led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
+  led3 = gpio__construct_as_output(GPIO__PORT_2, 3);
+  switch0 = gpio__construct_as_input(GPIO__PORT_0, 29);
+  switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
+  switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
+  switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
+  
+  gpio__set(led0);
+  gpio__set(led1);
+  gpio__set(led2);
+  gpio__set(led3);
+
+  
+  led_matrix__init();
 }
