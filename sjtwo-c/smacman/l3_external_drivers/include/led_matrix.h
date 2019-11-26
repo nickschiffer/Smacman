@@ -54,7 +54,7 @@ void led_matrix__enable_latch();
 void led_matrix__disable_latch();
 void led_matrix__select_row(int row);
 void led_matrix__clear_pixel(int row, int column);
-bool led_matrix__get_pixel(int row, int column)
+bool led_matrix__get_pixel(int row, int column);
 void led_matrix__set_pixel(int row, int col, led_matrix__color_e color);
 void led_matrix__set_row_data(int row, led_matrix__color_e color, uint64_t data);
 void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint64_t data);
