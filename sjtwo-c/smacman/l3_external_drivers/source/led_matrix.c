@@ -123,8 +123,8 @@ void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color) {
   }
 }
 
-void led_matrix__fill_frame_buffer_inside_grid() {
-  data_size data = ~((data_size)0x0FFFFFFFFFFFFFF0);
+void led_matrix_clear_frame_buffer_inside_grid(data_size data) {
+  data = ~data;
   for (int i = 2; i < (matrix_width - 2); i++) {
     frame_buffer[i][RED_PLANE] &= data;
     frame_buffer[i][GREEN_PLANE] &= data;
@@ -132,24 +132,33 @@ void led_matrix__fill_frame_buffer_inside_grid() {
   }
 }
 
-void led_matrix__fill_frame_buffer_inside_grid_lower_half() {
-  data_size data = ~((data_size)0x00000000FFFFFFF0);
-  for (int i = 2; i < (matrix_width - 2); i++) {
-    frame_buffer[i][RED_PLANE] &= data;
-    frame_buffer[i][GREEN_PLANE] &= data;
-    frame_buffer[i][BLUE_PLANE] &= data;
-  }
-}
+// void led_matrix__fill_frame_buffer_inside_grid() {
+//   data_size data = ~((data_size)0x0FFFFFFFFFFFFFF0);
+//   for (int i = 2; i < (matrix_width - 2); i++) {
+//     frame_buffer[i][RED_PLANE] &= data;
+//     frame_buffer[i][GREEN_PLANE] &= data;
+//     frame_buffer[i][BLUE_PLANE] &= data;
+//   }
+// }
 
-void led_matrix__fill_frame_buffer_inside_grid_upper_half() {
-  data_size data = ~((data_size)0x0FFFFFFF00000000);
-  // data_size data = ~((data_size)0x00000000FFFFFFF0);
-  for (int i = 2; i < (matrix_width - 2); i++) {
-    frame_buffer[i][RED_PLANE] &= data;
-    frame_buffer[i][GREEN_PLANE] &= data;
-    frame_buffer[i][BLUE_PLANE] &= data;
-  }
-}
+// void led_matrix__fill_frame_buffer_inside_grid_lower_half() {
+//   data_size data = ~((data_size)0x00000000FFFFFFF0);
+//   for (int i = 2; i < (matrix_width - 2); i++) {
+//     frame_buffer[i][RED_PLANE] &= data;
+//     frame_buffer[i][GREEN_PLANE] &= data;
+//     frame_buffer[i][BLUE_PLANE] &= data;
+//   }
+// }
+
+// void led_matrix__fill_frame_buffer_inside_grid_upper_half() {
+//   data_size data = ~((data_size)0x0FFFFFFF00000000);
+//   // data_size data = ~((data_size)0x00000000FFFFFFF0);
+//   for (int i = 2; i < (matrix_width - 2); i++) {
+//     frame_buffer[i][RED_PLANE] &= data;
+//     frame_buffer[i][GREEN_PLANE] &= data;
+//     frame_buffer[i][BLUE_PLANE] &= data;
+//   }
+// }
 
 void led_matrix__update_display() {
   for (int i = 0; i < 32; i++) {

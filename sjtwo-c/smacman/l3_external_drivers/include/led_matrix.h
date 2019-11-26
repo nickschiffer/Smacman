@@ -11,6 +11,10 @@
 #define row_bound 32UL
 #define data_size uint64_t
 
+static const data_size ALL_INSIDE_GRID = 0x0FFFFFFFFFFFFFF0;
+static const data_size LOWER_INSIDE_GRID = 0x00000000FFFFFFF0;
+static const data_size UPPER_INSIDE_GRID = 0x0FFFFFFF00000000;
+
 /**
  * r1,g1,b1 --> for first  32 rows
  * r2,g2,b2 --> for second 32 rows
@@ -61,3 +65,5 @@ void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint
 void led_matrix__clear_frame_buffer();
 void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color);
 void led_matrix__update_display();
+
+void led_matrix_clear_frame_buffer_inside_grid(data_size data);

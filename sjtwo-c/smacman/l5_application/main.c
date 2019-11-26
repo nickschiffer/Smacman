@@ -24,10 +24,7 @@ static void ball_task(void *params);
 static gpio_s led0, led1, led2, led3;
 static gpio_s switch0, switch1, switch2, switch3;
 
-
-
 int main(void) {
-  
 
   // switch0 = gpio__construct_with_function(GPIO__PORT_0, 29, GPIO__FUNCITON_0_IO_PIN);
   // switch1 = gpio__construct_with_function(GPIO__PORT_0, 30, GPIO__FUNCITON_0_IO_PIN);
@@ -37,7 +34,7 @@ int main(void) {
   // gpio__set_as_input(switch1);
   // gpio__set_as_input(switch2);
   // gpio__set_as_input(switch3);
-  
+
   // LPC_IOCON->P1_15 |= (1 << 3);
   // LPC_IOCON->P1_19 |= (1 << 3);
   acceleration__axis_data_s sensor_avg_value;
@@ -67,11 +64,6 @@ int main(void) {
 
 // Position and the velocity of the ball
 
-static void master_task(void *params){
-  int state = (int) *params;
-
-}
-
 static void display_task(void *params) {
   led_matrix__displayGridBorders(PINK);
   while (true) {
@@ -89,7 +81,7 @@ static void ball_task(void *params) {
   uint8_t score_green = 0;
   uint8_t cummulative_score = 1;
   while (1) {
-    led_matrix__fill_frame_buffer_inside_grid();
+    led_matrix_clear_frame_buffer_inside_grid(ALL_INSIDE_GRID);
     count = (count < 4) ? count + 1 : 1;
 
     // Update x movement // Wall collision
@@ -265,7 +257,7 @@ static void blue_pacman_task(void *params) {
   led_matrix__direction_e direction = LEFT_UP;
 
   while (true) {
-    led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
+    led_matrix_clear_frame_buffer_inside_grid(UPPER_INSIDE_GRID); // Player 1
 
     if (direction == LEFT_UP) {
       switch (row_left_upordown) {
@@ -428,7 +420,7 @@ static void green_pacman_task(void *params) {
   led_matrix__direction_e direction = LEFT_UP;
 
   while (true) {
-    led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
+    led_matrix_clear_frame_buffer_inside_grid(LOWER_INSIDE_GRID); // Player 2
     if (direction == LEFT_UP) {
       switch (row_left_upordown) {
       case 2 ... matrix_width - 8:
@@ -580,7 +572,7 @@ static void green_pacman_task(void *params) {
   }
 }
 
-static void smacman__startup(void){
+static void smacman__startup(void) {
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
   led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
   led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
@@ -589,12 +581,11 @@ static void smacman__startup(void){
   switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
   switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
   switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
-  
+
   gpio__set(led0);
   gpio__set(led1);
   gpio__set(led2);
   gpio__set(led3);
 
-  
   led_matrix__init();
 }
