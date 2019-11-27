@@ -21,6 +21,7 @@ static bool          controller_comm__button_2_is_pressed  = false;
 static controller_comm__message_s controller_comm__wait_on_next_message(controller_comm_s controller) {
     // recipient, sender, message_type, message_data_byte1, message_data_byte2, stop_byte
     char message_components[7] = {0};
+    controller_comm__message_header_t header = {0};
     controller_comm__message_s message = {0};
 #ifdef CONTROLLER_COMM__CHECKSUM
     uint8_t message_checksum_byte1 = {0};
@@ -53,20 +54,59 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
         }
     }
     // printf("valid start_byte received\n");
-    for (size_t i = 1; i < sizeof(message_components); ++i) {
-        if (!uart__get(controller.uart, &message_components[i], controller_comm__message_receive_byte_timeout_ms)){ 
+    if (!uart__get(controller.uart, &header.byte, controller_comm__message_receive_byte_timeout_ms)){ 
             memset(&message, 0, sizeof(controller_comm__message_s));
-            printf("timeout on receive: component #%u\n", i);
+            printf("timeout on receive: header\n");
+            return message;
+    }
+    message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_RECIPIENT] = (uint8_t)header.recipient;
+    message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_SENDER]    = (uint8_t)header.sender;
+    message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_TYPE]      = (uint8_t)header.message_type;
+
+    if (message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_TYPE] == CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL) {
+        if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE1], controller_comm__message_receive_byte_timeout_ms)){ 
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("timeout on receive: data_byte_1\n");
+            return message;
+        }
+        if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE], controller_comm__message_receive_byte_timeout_ms)){ 
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("timeout on receive: stop_byte\n");
+            return message;
+        }
+        if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != 0xAD) {
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            puts("failed stop byte");
+            for (int i = 0; i < sizeof(message_components); i++) {
+                printf("message components[%d] = %u\n", i, (uint8_t)message_components[i]);
+            }   
             return message;
         }
     }
-    if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != 0xAD) {
-        memset(&message, 0, sizeof(controller_comm__message_s));
-        puts("failed stop byte");
-        for (int i = 0; i < sizeof(message_components); i++) {
-            printf("message components[%d] = %u\n", i, (uint8_t)message_components[i]);
-        }   
-        return message;
+    else {
+        if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE1], controller_comm__message_receive_byte_timeout_ms)){ 
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("timeout on receive: data_byte_1\n");
+            return message;
+        }
+        if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE2], controller_comm__message_receive_byte_timeout_ms)){ 
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("timeout on receive: data_byte_2\n");
+            return message;
+        }
+        if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE], controller_comm__message_receive_byte_timeout_ms)){ 
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("timeout on receive: stop_byte\n");
+            return message;
+        }
+        if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != 0xAD) {
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("failed stop byte, got %X\n", (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE]);
+            for (int i = 0; i < sizeof(message_components); i++) {
+                printf("message components[%d] = %u\n", i, (uint8_t)message_components[i]);
+            }   
+            return message;
+        }
     }
     //puts("successful rx."); fflush(stdout);
 
@@ -81,20 +121,28 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
     return message;
 }
 static bool controller_comm__send_message(controller_comm_s controller, controller_comm__message_s message) {
-    uint8_t message_data_byte1 =  message.data       & 0xFF;
-    uint8_t message_data_byte2 = (message.data >> 8) & 0xFF;
-    uint8_t recipient          = (message.recipient    & 0xFF);
-    uint8_t sender             = (message.sender       & 0xFF);
-    uint8_t message_type       = (message.message_type & 0xFF);
+    uint8_t message_data_byte1 =  message.data         & 0xFF;
+    uint8_t message_data_byte2 = (message.data >> 8)   & 0xFF;
+
+    controller_comm__message_header_t header = {0};
+    header.recipient    = ((char)message.recipient    & 0x3);
+    header.sender       = ((char)message.sender       & 0x3);
+    header.message_type = ((char)message.message_type & 0x3);
 
     (void)uart__put(controller.uart, (char)controller_comm__message_start_byte, UINT32_MAX);
-    (void)uart__put(controller.uart, (char)recipient,          UINT32_MAX);
-    (void)uart__put(controller.uart, (char)sender,             UINT32_MAX);
-    (void)uart__put(controller.uart, (char)message_type,       UINT32_MAX);
-    (void)uart__put(controller.uart, (char)message_data_byte1, UINT32_MAX);
-    (void)uart__put(controller.uart, (char)message_data_byte2, UINT32_MAX);
-    (void)uart__put(controller.uart, (char)controller_comm__message_stop_byte, UINT32_MAX);
-    return true;
+    (void)uart__put(controller.uart, (char)header.byte,                         UINT32_MAX);
+
+    if (message.message_type == CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL) {
+        (void)uart__put(controller.uart, (char)message_data_byte1, UINT32_MAX);
+        (void)uart__put(controller.uart, (char)controller_comm__message_stop_byte, UINT32_MAX);
+        return true;
+    }
+    else {
+        (void)uart__put(controller.uart, (char)message_data_byte1, UINT32_MAX);
+        (void)uart__put(controller.uart, (char)message_data_byte2, UINT32_MAX);
+        (void)uart__put(controller.uart, (char)controller_comm__message_stop_byte, UINT32_MAX);
+        return true;
+    }
 }
 
 static bool controller_comm__update_score(controller_comm__message_s message) {
@@ -155,8 +203,8 @@ static void controller_comm__master_request_accel(controller_comm_s controller, 
 
 static void controller_comm__master_update_controller_states(controller_comm__message_s message) {
     if (message.sender == CONTROLLER_COMM__ROLE_PLAYER_1) {
-                    controller_comm__player_1_accel = message.data;
-                }
+        controller_comm__player_1_accel = message.data;
+    }
     else if (message.sender == CONTROLLER_COMM__ROLE_PLAYER_2) {
         controller_comm__player_2_accel = message.data;
     }
@@ -194,12 +242,19 @@ bool controller_comm__check_message_integrity(controller_comm__message_s message
  *                      P U B L I C    F U N C T I O N S
  *
  ******************************************************************************/
-controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uart){
+controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uart, gpio_s gpio_tx, gpio_s gpio_rx) {
     controller_comm_s controller = {0};
     controller.role = role;
     controller.uart = uart;
     controller.rx_queue = xQueueCreate(controller_comm__rx_queue_size, sizeof(char));
     controller.tx_queue = xQueueCreate(controller_comm__tx_queue_size, sizeof(char));
+    controller.gpio_rx = gpio_rx;
+    controller.gpio_tx = gpio_tx;
+
+    gpio__set_as_input(controller.gpio_rx);
+    gpio__set_as_output(controller.gpio_tx);
+    gpio__set_function(controller.gpio_rx, GPIO__FUNCTION_2);
+    gpio__set_function(controller.gpio_tx, GPIO__FUNCTION_2);
     
     uart__init(uart, clock__get_peripheral_clock_hz(), controller_comm__uart_baud_rate);
     uart__enable_queues(controller.uart, controller.rx_queue, controller.tx_queue);
@@ -246,11 +301,8 @@ void controller_comm__freertos_task(void *controller_comm_struct){
         case CONTROLLER_COMM__ROLE_PLAYER_2: {
             while(1) {
                 controller_comm__message_s message = controller_comm__wait_on_next_message(controller);
-                // puts("Message Received");fflush(stdout);
-                // printf("role: %d\n",message.recipient);
                 if (message.recipient == controller.role) { // Is this message for me?
-                    // puts("Controller Received Message");fflush(stdout);
-                    
+                    // puts("Controller Received Message");fflush(stdout); 
                     controller_comm__handle_received_message(controller, message);
                 }
             }

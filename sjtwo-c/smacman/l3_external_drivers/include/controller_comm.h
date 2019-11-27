@@ -60,7 +60,6 @@ typedef enum {
     CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL,
     CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL,
     CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED,
-    CONTROLLER_COMM__MESSAGE_TYPE_UPDATE_SCORE,
 } controller_comm__message_type_e;
 
 typedef enum {
@@ -82,7 +81,8 @@ typedef enum {
 typedef struct {
     controller_comm__role_e role;
     uart_e uart;
-    gpio_s gpio;
+    gpio_s gpio_tx;
+    gpio_s gpio_rx;
     QueueHandle_t rx_queue;
     QueueHandle_t tx_queue;
 } controller_comm_s;
@@ -97,12 +97,22 @@ typedef struct {
 #endif
 } controller_comm__message_s;
 
+typedef union {
+	char byte;
+	struct {
+	    char             : 2;
+	    char message_type: 2;
+	    char sender:       2;
+		char recipient:    2; 
+	} __attribute__((packed));
+}__attribute__((packed)) controller_comm__message_header_t;
+
 /*******************************************************************************
  *
  *                      P U B L I C    F U N C T I O N S
  *
  ******************************************************************************/
-controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uart);
+controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uart, gpio_s gpio_tx, gpio_s gpio_rx);
 uint16_t controller_comm__get_player_1_accel();
 uint16_t controller_comm__get_player_2_accel();
 bool controller_comm__update_player_score(controller_comm__role_e player, uint8_t score);
