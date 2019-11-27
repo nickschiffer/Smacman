@@ -99,6 +99,14 @@ void led_matrix__set_pixel(int row, int col, led_matrix__color_e color) {
   }
 }
 
+void led_matrix__modify_pixel(int row, int col, led_matrix__color_e color) {
+  if (color == OFF) {
+    led_matrix__clear_pixel(row, col);
+  } else {
+    led_matrix__set_pixel(row, col, color);
+  }
+}
+
 void led_matrix__set_row_data(int row, led_matrix__color_e color, uint64_t data) {
   if (color & 0x01) {
     frame_buffer[row][BLUE_PLANE] = data;

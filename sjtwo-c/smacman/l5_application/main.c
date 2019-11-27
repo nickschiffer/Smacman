@@ -11,6 +11,9 @@
 
 #include "game_graphics.h"
 
+extern volatile bool collided;
+static bool green_pacman_start = 0;
+static bool blue_pacman_start = 0;
 static void smacman__startup(void);
 
 static void blue_pacman_task(void *params);
@@ -24,10 +27,7 @@ static void ball_task(void *params);
 static gpio_s led0, led1, led2, led3;
 static gpio_s switch0, switch1, switch2, switch3;
 
-
-
 int main(void) {
-  
 
   // switch0 = gpio__construct_with_function(GPIO__PORT_0, 29, GPIO__FUNCITON_0_IO_PIN);
   // switch1 = gpio__construct_with_function(GPIO__PORT_0, 30, GPIO__FUNCITON_0_IO_PIN);
@@ -37,9 +37,10 @@ int main(void) {
   // gpio__set_as_input(switch1);
   // gpio__set_as_input(switch2);
   // gpio__set_as_input(switch3);
-  
+
   // LPC_IOCON->P1_15 |= (1 << 3);
   // LPC_IOCON->P1_19 |= (1 << 3);
+  smacman__startup();
   acceleration__axis_data_s sensor_avg_value;
   sensor_avg_value = acceleration__get_data();
   srand(sensor_avg_value.x + sensor_avg_value.z);
@@ -67,10 +68,7 @@ int main(void) {
 
 // Position and the velocity of the ball
 
-static void master_task(void *params){
-  int state = (int) *params;
-
-}
+// static void master_task(void *params) { int state = (int)*params; }
 
 static void display_task(void *params) {
   led_matrix__displayGridBorders(PINK);
@@ -89,14 +87,16 @@ static void ball_task(void *params) {
   uint8_t score_green = 0;
   uint8_t cummulative_score = 1;
   while (1) {
-    led_matrix__fill_frame_buffer_inside_grid();
+    // led_matrix__fill_frame_buffer_inside_grid();
+    // clear_ball(ball.row, ball.col);
+    led_matrix__drawBall(ball.row, ball.col, OFF);
     count = (count < 4) ? count + 1 : 1;
 
     // Update x movement // Wall collision
     if (count % (5 - ball.vx) == 0) {
       ball.row = (ball.xDir > 0) ? ball.row + 1 : ball.row - 1; // left: right
       // If wall collision then reverse the x direction
-      if (ball.row <= 3 || ball.row >= (matrix_width - 4)) {
+      if (ball.row <= 3 || ball.row >= (matrix_width - 5)) {
         ball.xDir = -ball.xDir;
       }
     }
@@ -161,6 +161,12 @@ static void ball_task(void *params) {
       }
     }
     detect_collision(ball);
+    if (collided == 1) {
+      collided = 0;
+      blue_pacman_start = 1;
+      green_pacman_start = 1;
+      ball_setup(&ball);
+    }
     vTaskDelay(25);
   }
 }
@@ -255,323 +261,338 @@ static void green_paddle_task(void *params) {
 }
 
 static void blue_pacman_task(void *params) {
-  int row_upordown_right = 5, row_upordown_left = matrix_width - 6, row_left_upordown = 2,
-      row_right_upordown = matrix_width - 3;
-  int col_up_leftorright = (matrix_height / 2), col_down_leftorright = matrix_height - 5,
-      col_leftorrigt_up = matrix_height - 8, col_leftorrigt_down = (matrix_height / 2) + 3;
+  pacman_s blue_pacman;
+  blue_pacman.row_upordown_right = 5, blue_pacman.row_upordown_left = matrix_width - 6,
+  blue_pacman.row_left_upordown = 2, blue_pacman.row_right_upordown = matrix_width - 3;
+  blue_pacman.col_up_leftorright = (matrix_height / 2), blue_pacman.col_down_leftorright = matrix_height - 5,
+  blue_pacman.col_leftorrigt_up = matrix_height - 8, blue_pacman.col_leftorrigt_down = (matrix_height / 2) + 3;
 
   int var;
-  led_matrix__color_e packman_color = BLUE;
-  led_matrix__direction_e direction = LEFT_UP;
+  blue_pacman.packman_color = BLUE;
+  blue_pacman.direction = LEFT_UP;
 
   while (true) {
     led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
+    if (blue_pacman_start == 1) {
+      blue_pacman_start = 0;
+      // green_pacman_start=1;
+      blue_pacman_setup(&blue_pacman);
+    }
 
-    if (direction == LEFT_UP) {
-      switch (row_left_upordown) {
+    if (blue_pacman.direction == LEFT_UP) {
+      switch (blue_pacman.row_left_upordown) {
       case 2 ... matrix_width - 8:
-        game_graphics_packman(row_left_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_left_upordown, blue_pacman.col_leftorrigt_up, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        row_left_upordown++;
+        blue_pacman.row_left_upordown++;
         break;
       case matrix_width - 7 ... matrix_width: // Check this condition
         var = rand();
         if (var % 2) {
-          direction = DOWN_LEFT;
+          blue_pacman.direction = DOWN_LEFT;
         } else {
-          direction = RIGHT_UP;
+          blue_pacman.direction = RIGHT_UP;
         }
-        row_left_upordown = 2;
+        blue_pacman.row_left_upordown = 2;
         break;
       }
     }
-    if (direction == RIGHT_UP) {
-      switch (row_right_upordown) {
+    if (blue_pacman.direction == RIGHT_UP) {
+      switch (blue_pacman.row_right_upordown) {
       case 7 ... matrix_width - 3:
-        game_graphics_packman(row_right_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_right_upordown, blue_pacman.col_leftorrigt_up, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        row_right_upordown--;
+        blue_pacman.row_right_upordown--;
         break;
       case 0 ... 6: // Check this condition
         var = rand();
         if (var % 2) {
-          direction = LEFT_UP;
+          blue_pacman.direction = LEFT_UP;
         } else {
-          direction = DOWN_RIGHT;
+          blue_pacman.direction = DOWN_RIGHT;
         }
-        row_right_upordown = matrix_width - 3;
+        blue_pacman.row_right_upordown = matrix_width - 3;
         break;
       }
     }
-    if (direction == DOWN_LEFT) {
-      switch (col_down_leftorright) {
+    if (blue_pacman.direction == DOWN_LEFT) {
+      switch (blue_pacman.col_down_leftorright) {
       case (matrix_height / 2) + 5 ... matrix_height - 5:
-        game_graphics_packman(row_upordown_left, col_down_leftorright, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_upordown_left, blue_pacman.col_down_leftorright, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        col_down_leftorright--;
+        blue_pacman.col_down_leftorright--;
         break;
       case 0 ...(matrix_height / 2) + 4: // Check this condition
         var = rand();
         if (var % 2) {
-          direction = RIGHT_DOWN;
+          blue_pacman.direction = RIGHT_DOWN;
         } else {
-          direction = UP_LEFT;
+          blue_pacman.direction = UP_LEFT;
         }
-        col_down_leftorright = matrix_height - 5;
+        blue_pacman.col_down_leftorright = matrix_height - 5;
         break;
       }
     }
-    if (direction == UP_LEFT) {
-      switch (col_up_leftorright) {
+    if (blue_pacman.direction == UP_LEFT) {
+      switch (blue_pacman.col_up_leftorright) {
       case (matrix_height / 2)... matrix_width - 10:
-        game_graphics_packman(row_upordown_left, col_up_leftorright, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_upordown_left, blue_pacman.col_up_leftorright, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        col_up_leftorright++;
+        blue_pacman.col_up_leftorright++;
         break;
       case matrix_height - 9 ... matrix_height:
         var = rand();
         if (var % 2) {
-          direction = RIGHT_UP;
+          blue_pacman.direction = RIGHT_UP;
         } else {
-          direction = DOWN_LEFT;
+          blue_pacman.direction = DOWN_LEFT;
         }
-        col_up_leftorright = (matrix_height / 2);
+        blue_pacman.col_up_leftorright = (matrix_height / 2);
         break;
       }
     }
 
-    if (direction == RIGHT_DOWN) {
-      switch (row_right_upordown) {
+    if (blue_pacman.direction == RIGHT_DOWN) {
+      switch (blue_pacman.row_right_upordown) {
       case 7 ... matrix_height - 3:
-        game_graphics_packman(row_right_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_right_upordown, blue_pacman.col_leftorrigt_down, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        row_right_upordown--;
+        blue_pacman.row_right_upordown--;
         break;
       case 0 ... 6:
         var = rand();
         if (var % 2) {
-          direction = UP_RIGHT;
+          blue_pacman.direction = UP_RIGHT;
         } else {
-          direction = LEFT_DOWN;
+          blue_pacman.direction = LEFT_DOWN;
         }
-        row_right_upordown = matrix_height - 3;
+        blue_pacman.row_right_upordown = matrix_height - 3;
         break;
       }
     }
-    if (direction == LEFT_DOWN) {
-      switch (row_left_upordown) {
+    if (blue_pacman.direction == LEFT_DOWN) {
+      switch (blue_pacman.row_left_upordown) {
       case 2 ... matrix_width - 8:
-        game_graphics_packman(row_left_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_left_upordown, blue_pacman.col_leftorrigt_down, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        row_left_upordown++;
+        blue_pacman.row_left_upordown++;
         break;
       case matrix_width - 7 ... matrix_width:
         var = rand();
         if (var % 2) {
-          direction = UP_LEFT;
+          blue_pacman.direction = UP_LEFT;
         } else {
-          direction = RIGHT_DOWN;
+          blue_pacman.direction = RIGHT_DOWN;
         }
-        row_left_upordown = 2;
+        blue_pacman.row_left_upordown = 2;
         break;
       }
     }
 
-    if (direction == UP_RIGHT) {
-      switch (col_up_leftorright) {
+    if (blue_pacman.direction == UP_RIGHT) {
+      switch (blue_pacman.col_up_leftorright) {
       case (matrix_height / 2)... matrix_height - 10:
-        game_graphics_packman(row_upordown_right, col_up_leftorright, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_upordown_right, blue_pacman.col_up_leftorright, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        col_up_leftorright++;
+        blue_pacman.col_up_leftorright++;
         break;
       case matrix_height - 9 ... matrix_height:
         var = rand();
         if (var % 2) {
-          direction = LEFT_UP;
+          blue_pacman.direction = LEFT_UP;
         } else {
-          direction = DOWN_RIGHT;
+          blue_pacman.direction = DOWN_RIGHT;
         }
-        col_up_leftorright = (matrix_height / 2) + 4;
+        blue_pacman.col_up_leftorright = (matrix_height / 2) + 4;
         break;
       }
     }
-    if (direction == DOWN_RIGHT) {
-      switch (col_down_leftorright) {
+    if (blue_pacman.direction == DOWN_RIGHT) {
+      switch (blue_pacman.col_down_leftorright) {
       case (matrix_height / 2) + 5 ... matrix_height - 5:
-        game_graphics_packman(row_upordown_right, col_down_leftorright, direction, packman_color, PLAYER_1);
+        game_graphics_packman(blue_pacman.row_upordown_right, blue_pacman.col_down_leftorright, blue_pacman.direction,
+                              blue_pacman.packman_color, PLAYER_1);
         // led_matrix__update_display();
-        col_down_leftorright--;
+        blue_pacman.col_down_leftorright--;
         break;
       case 0 ...(matrix_height / 2) + 4:
         var = rand();
         if (var % 2) {
-          direction = LEFT_DOWN;
+          blue_pacman.direction = LEFT_DOWN;
         } else {
-          direction = UP_RIGHT;
+          blue_pacman.direction = UP_RIGHT;
         }
-        col_down_leftorright = matrix_height - 5;
+        blue_pacman.col_down_leftorright = matrix_height - 5;
         break;
       }
     }
 
-    vTaskDelay(200);
+    vTaskDelay(50);
   }
 }
 
 static void green_pacman_task(void *params) {
-  int row_upordown_right = 5, row_upordown_left = matrix_width - 6, row_left_upordown = 2,
-      row_right_upordown = matrix_width - 3;
-  int col_up_leftorright = 4, col_down_leftorright = (matrix_height / 2) - 1,
-      col_leftorrigt_up = (matrix_height / 2) - 4, col_leftorrigt_down = 7;
+  pacman_s green_pacman;
+   green_pacman.row_upordown_right = 5, green_pacman.row_upordown_left = matrix_width - 6, green_pacman.row_left_upordown = 2,
+      green_pacman.row_right_upordown = matrix_width - 3;
+   green_pacman.col_up_leftorright = 4, green_pacman.col_down_leftorright = (matrix_height / 2) - 1,
+      green_pacman.col_leftorrigt_up = (matrix_height / 2) - 4, green_pacman.col_leftorrigt_down = 7;
   int var;
   led_matrix__color_e packman_color = GREEN;
-  led_matrix__direction_e direction = LEFT_UP;
+  led_matrix__direction_e green_pacman.direction = LEFT_UP;
 
   while (true) {
     led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
-    if (direction == LEFT_UP) {
-      switch (row_left_upordown) {
+    if (green_pacman.direction == LEFT_UP) {
+      switch (green_pacman.row_left_upordown) {
       case 2 ... matrix_width - 8:
-        game_graphics_packman(row_left_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_left_upordown, green_pacman.col_leftorrigt_up, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        row_left_upordown++;
+        green_pacman.row_left_upordown++;
         break;
       case matrix_width - 7 ... matrix_width: // Check this condition
         var = rand();
         if (var % 2) {
-          direction = DOWN_LEFT;
+          green_pacman.direction = DOWN_LEFT;
         } else {
-          direction = RIGHT_UP;
+          green_pacman.direction = RIGHT_UP;
         }
-        row_left_upordown = 2;
+        green_pacman.row_left_upordown = 2;
         break;
       }
     }
-    if (direction == RIGHT_UP) {
-      switch (row_right_upordown) {
+    if (green_pacman.direction == RIGHT_UP) {
+      switch (green_pacman.row_right_upordown) {
       case 7 ... matrix_width - 3:
-        game_graphics_packman(row_right_upordown, col_leftorrigt_up, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_right_upordown, green_pacman.col_leftorrigt_up, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        row_right_upordown--;
+        green_pacman.row_right_upordown--;
         break;
       case 0 ... 6: // Check this condition
         var = rand();
         if (var % 2) {
-          direction = LEFT_UP;
+          green_pacman.direction = LEFT_UP;
         } else {
-          direction = DOWN_RIGHT;
+          green_pacman.direction = DOWN_RIGHT;
         }
-        row_right_upordown = matrix_width - 3;
+        green_pacman.row_right_upordown = matrix_width - 3;
         break;
       }
     }
-    if (direction == DOWN_LEFT) {
-      switch (col_down_leftorright) {
+    if (green_pacman.direction == DOWN_LEFT) {
+      switch (green_pacman.col_down_leftorright) {
       case 9 ...(matrix_height / 2) - 1:
-        game_graphics_packman(row_upordown_left, col_down_leftorright, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_upordown_left, green_pacman.col_down_leftorright, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        col_down_leftorright--;
+        green_pacman.col_down_leftorright--;
         break;
       case 0 ... 8:
         var = rand();
         if (var % 2) {
-          direction = RIGHT_DOWN;
+          green_pacman.direction = RIGHT_DOWN;
         } else {
-          direction = UP_LEFT;
+          green_pacman.direction = UP_LEFT;
         }
-        col_down_leftorright = (matrix_height / 2) - 1;
+        green_pacman.col_down_leftorright = (matrix_height / 2) - 1;
         break;
       }
     }
-    if (direction == UP_LEFT) {
-      switch (col_up_leftorright) {
+    if (green_pacman.direction == UP_LEFT) {
+      switch (green_pacman.col_up_leftorright) {
       case 4 ...(matrix_height / 2) - 6:
-        game_graphics_packman(row_upordown_left, col_up_leftorright, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_upordown_left, green_pacman.col_up_leftorright, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        col_up_leftorright++;
+        green_pacman.col_up_leftorright++;
         break;
       case (matrix_height / 2) - 5 ... matrix_height:
         var = rand();
         if (var % 2) {
-          direction = RIGHT_UP;
+          green_pacman.direction = RIGHT_UP;
         } else {
-          direction = DOWN_LEFT;
+          green_pacman.direction = DOWN_LEFT;
         }
-        col_up_leftorright = 4;
+        green_pacman.col_up_leftorright = 4;
         break;
       }
     }
 
-    if (direction == RIGHT_DOWN) {
-      switch (row_right_upordown) {
+    if (green_pacman.direction == RIGHT_DOWN) {
+      switch (green_pacman.row_right_upordown) {
       case 7 ... matrix_height - 3:
-        game_graphics_packman(row_right_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_right_upordown, green_pacman.col_leftorrigt_down, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        row_right_upordown--;
+        green_pacman.row_right_upordown--;
         break;
       case 0 ... 6:
         var = rand();
         if (var % 2) {
-          direction = UP_RIGHT;
+          green_pacman.direction = UP_RIGHT;
         } else {
-          direction = LEFT_DOWN;
+          green_pacman.direction = LEFT_DOWN;
         }
-        row_right_upordown = matrix_height - 3;
+        green_pacman.row_right_upordown = matrix_height - 3;
         break;
       }
     }
-    if (direction == LEFT_DOWN) {
-      switch (row_left_upordown) {
+    if (green_pacman.direction == LEFT_DOWN) {
+      switch (green_pacman.row_left_upordown) {
       case 2 ... matrix_width - 8:
-        game_graphics_packman(row_left_upordown, col_leftorrigt_down, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_left_upordown, green_pacman.col_leftorrigt_down, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        row_left_upordown++;
+        green_pacman.row_left_upordown++;
         break;
       case matrix_width - 7 ... matrix_width:
         var = rand();
         if (var % 2) {
-          direction = UP_LEFT;
+          green_pacman.direction = UP_LEFT;
         } else {
-          direction = RIGHT_DOWN;
+          green_pacman.direction = RIGHT_DOWN;
         }
-        row_left_upordown = 2;
+        green_pacman.row_left_upordown = 2;
         break;
       }
     }
 
-    if (direction == UP_RIGHT) {
-      switch (col_up_leftorright) {
+    if (green_pacman.direction == UP_RIGHT) {
+      switch (green_pacman.col_up_leftorright) {
       case 4 ...(matrix_height / 2) - 6:
-        game_graphics_packman(row_upordown_right, col_up_leftorright, direction, packman_color, PLAYER_2);
+        game_graphics_packman(green_pacman.row_upordown_right, green_pacman.col_up_leftorright, green_pacman.direction, packman_color, PLAYER_2);
         // led_matrix__update_display();
-        col_up_leftorright++;
+        green_pacman.col_up_leftorright++;
         break;
       case (matrix_height / 2) - 5 ... matrix_height:
         var = rand();
         if (var % 2) {
-          direction = LEFT_UP;
+          green_pacman.direction = LEFT_UP;
         } else {
-          direction = DOWN_RIGHT;
+          green_pacman.direction = DOWN_RIGHT;
         }
-        col_up_leftorright = 4;
+        green_pacman.col_up_leftorright = 4;
         break;
       }
     }
-    if (direction == DOWN_RIGHT) {
-      switch (col_down_leftorright) {
+    if (green_pacman.direction == DOWN_RIGHT) {
+      switch (green_pacman.col_down_leftorright) {
       case 9 ...(matrix_height / 2) - 1:
-        game_graphics_packman(row_upordown_right, col_down_leftorright, direction, packman_color,
+        game_graphics_packman(green_pacman.row_upordown_right, green_pacman.col_down_leftorright, green_pacman.direction, packman_color,
                               PLAYER_2); // led_matrix__update_display();
-        col_down_leftorright--;
+        green_pacman.col_down_leftorright--;
         break;
       case 0 ... 8:
         var = rand();
         if (var % 2) {
-          direction = LEFT_DOWN;
+          green_pacman.direction = LEFT_DOWN;
         } else {
-          direction = UP_RIGHT;
+          green_pacman.direction = UP_RIGHT;
         }
-        col_down_leftorright = (matrix_height / 2) - 1;
+        green_pacman.col_down_leftorright = (matrix_height / 2) - 1;
         break;
       }
     }
@@ -580,7 +601,7 @@ static void green_pacman_task(void *params) {
   }
 }
 
-static void smacman__startup(void){
+static void smacman__startup(void) {
   led0 = gpio__construct_as_output(GPIO__PORT_1, 18);
   led1 = gpio__construct_as_output(GPIO__PORT_1, 24);
   led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
@@ -589,12 +610,11 @@ static void smacman__startup(void){
   switch1 = gpio__construct_as_input(GPIO__PORT_0, 30);
   switch2 = gpio__construct_as_input(GPIO__PORT_0, 8);
   switch3 = gpio__construct_as_input(GPIO__PORT_0, 9);
-  
+
   gpio__set(led0);
   gpio__set(led1);
   gpio__set(led2);
   gpio__set(led3);
 
-  
   led_matrix__init();
 }

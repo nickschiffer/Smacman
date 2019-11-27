@@ -59,96 +59,96 @@ void led_matrix__drawPaddle_green(int row, int column, led_matrix__direction_e d
 void led_matrix__set_line1_pac(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right,
                                led_matrix__color_e packman_color) {
   if (var_left || var_right) {
-    led_matrix__set_pixel(row, column, packman_color);
-    led_matrix__set_pixel(row, column - 1, packman_color);
-    led_matrix__set_pixel(row, column + 1, packman_color);
+    led_matrix__modify_pixel(row, column, packman_color);
+    led_matrix__modify_pixel(row, column - 1, packman_color);
+    led_matrix__modify_pixel(row, column + 1, packman_color);
   } else if (var_up || var_down) {
-    led_matrix__set_pixel(row, column, packman_color);
-    led_matrix__set_pixel(row - 1, column, packman_color);
-    led_matrix__set_pixel(row + 1, column, packman_color);
+    led_matrix__modify_pixel(row, column, packman_color);
+    led_matrix__modify_pixel(row - 1, column, packman_color);
+    led_matrix__modify_pixel(row + 1, column, packman_color);
   }
 }
 void led_matrix__set_line2_pac(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right,
                                led_matrix__color_e packman_color) {
 
   if (var_left || var_right) {
-    led_matrix__set_pixel(var_left ? row + 1 : row - 1, column + 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 1 : row - 1, column + 1, packman_color);
-    led_matrix__set_pixel(var_left ? row + 1 : row - 1, column + 0, packman_color);
-    led_matrix__set_pixel(var_left ? row + 1 : row - 1, column - 1, packman_color);
-    led_matrix__set_pixel(var_left ? row + 1 : row - 1, column - 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 1 : row - 1, column + 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 1 : row - 1, column + 1, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 1 : row - 1, column + 0, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 1 : row - 1, column - 1, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 1 : row - 1, column - 2, packman_color);
   } else if (var_up || var_down) {
-    led_matrix__set_pixel(row + 2, var_down ? column - 1 : column + 1, packman_color);
-    led_matrix__set_pixel(row + 1, var_down ? column - 1 : column + 1, packman_color);
-    led_matrix__set_pixel(row + 0, var_down ? column - 1 : column + 1, packman_color);
-    led_matrix__set_pixel(row - 1, var_down ? column - 1 : column + 1, packman_color);
-    led_matrix__set_pixel(row - 2, var_down ? column - 1 : column + 1, packman_color);
+    led_matrix__modify_pixel(row + 2, var_down ? column - 1 : column + 1, packman_color);
+    led_matrix__modify_pixel(row + 1, var_down ? column - 1 : column + 1, packman_color);
+    led_matrix__modify_pixel(row + 0, var_down ? column - 1 : column + 1, packman_color);
+    led_matrix__modify_pixel(row - 1, var_down ? column - 1 : column + 1, packman_color);
+    led_matrix__modify_pixel(row - 2, var_down ? column - 1 : column + 1, packman_color);
   }
 }
 void led_matrix__set_line3_pac(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right,
                                led_matrix__color_e packman_color) {
 
   if (var_left || var_right) {
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column + 3, packman_color);
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column + 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column + 1, packman_color);
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column + 0, packman_color);
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column - 1, packman_color);
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column - 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 2 : row - 2, column - 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column + 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column + 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column + 1, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column + 0, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column - 1, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column - 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 2 : row - 2, column - 3, packman_color);
   } else if (var_up || var_down) {
-    led_matrix__set_pixel(row + 3, var_down ? column - 2 : column + 2, packman_color);
-    led_matrix__set_pixel(row + 2, var_down ? column - 2 : column + 2, packman_color);
-    led_matrix__set_pixel(row + 1, var_down ? column - 2 : column + 2, packman_color);
-    led_matrix__set_pixel(row + 0, var_down ? column - 2 : column + 2, packman_color);
-    led_matrix__set_pixel(row - 1, var_down ? column - 2 : column + 2, packman_color);
-    led_matrix__set_pixel(row - 2, var_down ? column - 2 : column + 2, packman_color);
-    led_matrix__set_pixel(row - 3, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row + 3, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row + 2, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row + 1, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row + 0, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row - 1, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row - 2, var_down ? column - 2 : column + 2, packman_color);
+    led_matrix__modify_pixel(row - 3, var_down ? column - 2 : column + 2, packman_color);
   }
 }
 void led_matrix__set_line4_pac(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right,
                                led_matrix__color_e packman_color) {
 
   if (var_left || var_right) {
-    led_matrix__set_pixel(var_left ? row + 3 : row - 3, column - 3, packman_color);
-    led_matrix__set_pixel(var_left ? row + 3 : row - 3, column - 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 3 : row - 3, column - 1, packman_color);
-    led_matrix__set_pixel(var_left ? row + 3 : row - 3, column + 1, packman_color);
-    led_matrix__set_pixel(var_left ? row + 3 : row - 3, column + 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 3 : row - 3, column + 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 3 : row - 3, column - 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 3 : row - 3, column - 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 3 : row - 3, column - 1, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 3 : row - 3, column + 1, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 3 : row - 3, column + 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 3 : row - 3, column + 3, packman_color);
   } else if (var_up || var_down) {
-    led_matrix__set_pixel(row + 3, var_down ? column - 3 : column + 3, packman_color);
-    led_matrix__set_pixel(row + 2, var_down ? column - 3 : column + 3, packman_color);
-    led_matrix__set_pixel(row + 1, var_down ? column - 3 : column + 3, packman_color);
-    led_matrix__set_pixel(row - 1, var_down ? column - 3 : column + 3, packman_color);
-    led_matrix__set_pixel(row - 2, var_down ? column - 3 : column + 3, packman_color);
-    led_matrix__set_pixel(row - 3, var_down ? column - 3 : column + 3, packman_color);
+    led_matrix__modify_pixel(row + 3, var_down ? column - 3 : column + 3, packman_color);
+    led_matrix__modify_pixel(row + 2, var_down ? column - 3 : column + 3, packman_color);
+    led_matrix__modify_pixel(row + 1, var_down ? column - 3 : column + 3, packman_color);
+    led_matrix__modify_pixel(row - 1, var_down ? column - 3 : column + 3, packman_color);
+    led_matrix__modify_pixel(row - 2, var_down ? column - 3 : column + 3, packman_color);
+    led_matrix__modify_pixel(row - 3, var_down ? column - 3 : column + 3, packman_color);
   }
 }
 void led_matrix__set_line5_pac(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right,
                                led_matrix__color_e packman_color) {
 
   if (var_left || var_right) {
-    led_matrix__set_pixel(var_left ? row + 4 : row - 4, column + 3, packman_color);
-    led_matrix__set_pixel(var_left ? row + 4 : row - 4, column + 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 4 : row - 4, column - 2, packman_color);
-    led_matrix__set_pixel(var_left ? row + 4 : row - 4, column - 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 4 : row - 4, column + 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 4 : row - 4, column + 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 4 : row - 4, column - 2, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 4 : row - 4, column - 3, packman_color);
   } else if (var_up || var_down) {
-    led_matrix__set_pixel(row + 3, var_down ? column - 4 : column + 4, packman_color);
-    led_matrix__set_pixel(row + 2, var_down ? column - 4 : column + 4, packman_color);
-    led_matrix__set_pixel(row - 2, var_down ? column - 4 : column + 4, packman_color);
-    led_matrix__set_pixel(row - 3, var_down ? column - 4 : column + 4, packman_color);
+    led_matrix__modify_pixel(row + 3, var_down ? column - 4 : column + 4, packman_color);
+    led_matrix__modify_pixel(row + 2, var_down ? column - 4 : column + 4, packman_color);
+    led_matrix__modify_pixel(row - 2, var_down ? column - 4 : column + 4, packman_color);
+    led_matrix__modify_pixel(row - 3, var_down ? column - 4 : column + 4, packman_color);
   }
 }
 void led_matrix__set_line6_pac(int row, int column, bool var_up, bool var_down, bool var_left, bool var_right,
                                led_matrix__color_e packman_color) {
 
   if (var_left || var_right) {
-    led_matrix__set_pixel(var_left ? row + 5 : row - 5, column + 3, packman_color);
-    led_matrix__set_pixel(var_left ? row + 5 : row - 5, column - 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 5 : row - 5, column + 3, packman_color);
+    led_matrix__modify_pixel(var_left ? row + 5 : row - 5, column - 3, packman_color);
   } else if (var_up || var_down) {
-    led_matrix__set_pixel(row + 3, var_down ? column - 5 : column + 5, packman_color);
-    led_matrix__set_pixel(row - 3, var_down ? column - 5 : column + 5, packman_color);
+    led_matrix__modify_pixel(row + 3, var_down ? column - 5 : column + 5, packman_color);
+    led_matrix__modify_pixel(row - 3, var_down ? column - 5 : column + 5, packman_color);
   }
 }
 /**************Setting  Lines for Ball- Begins*****************/
@@ -227,33 +227,33 @@ void led_matrix__set_line5_ball(int row, int column, bool var_up, bool var_down,
 
 /**************Setting Lines for Ball - Ends*****************/
 
-void led_matrix__drawBall(int row, int column) {
-  led_matrix__color_e ball_color = RED;
-  led_matrix__set_pixel(row, column, ball_color);
-  led_matrix__set_pixel(row, column - 1, ball_color);
-  led_matrix__set_pixel(row, column + 1, ball_color);
-  led_matrix__set_pixel(row, column - 2, ball_color);
-  led_matrix__set_pixel(row, column + 2, ball_color);
+void led_matrix__drawBall(int row, int column, led_matrix__color_e ball_color) {
+  // led_matrix__color_e ball_color = RED;
+  led_matrix__modify_pixel(row, column, ball_color);
+  led_matrix__modify_pixel(row, column - 1, ball_color);
+  led_matrix__modify_pixel(row, column + 1, ball_color);
+  led_matrix__modify_pixel(row, column - 2, ball_color);
+  led_matrix__modify_pixel(row, column + 2, ball_color);
 
-  led_matrix__set_pixel(row - 1, column, ball_color);
-  led_matrix__set_pixel(row - 1, column - 1, ball_color);
-  led_matrix__set_pixel(row - 1, column + 1, ball_color);
-  led_matrix__set_pixel(row - 1, column - 2, ball_color);
-  led_matrix__set_pixel(row - 1, column + 2, ball_color);
+  led_matrix__modify_pixel(row - 1, column, ball_color);
+  led_matrix__modify_pixel(row - 1, column - 1, ball_color);
+  led_matrix__modify_pixel(row - 1, column + 1, ball_color);
+  led_matrix__modify_pixel(row - 1, column - 2, ball_color);
+  led_matrix__modify_pixel(row - 1, column + 2, ball_color);
 
-  led_matrix__set_pixel(row + 1, column, ball_color);
-  led_matrix__set_pixel(row + 1, column - 1, ball_color);
-  led_matrix__set_pixel(row + 1, column + 1, ball_color);
-  led_matrix__set_pixel(row + 1, column - 2, ball_color);
-  led_matrix__set_pixel(row + 1, column + 2, ball_color);
+  led_matrix__modify_pixel(row + 1, column, ball_color);
+  led_matrix__modify_pixel(row + 1, column - 1, ball_color);
+  led_matrix__modify_pixel(row + 1, column + 1, ball_color);
+  led_matrix__modify_pixel(row + 1, column - 2, ball_color);
+  led_matrix__modify_pixel(row + 1, column + 2, ball_color);
 
-  led_matrix__set_pixel(row - 2, column, ball_color);
-  led_matrix__set_pixel(row - 2, column - 1, ball_color);
-  led_matrix__set_pixel(row - 2, column + 1, ball_color);
+  led_matrix__modify_pixel(row - 2, column, ball_color);
+  led_matrix__modify_pixel(row - 2, column - 1, ball_color);
+  led_matrix__modify_pixel(row - 2, column + 1, ball_color);
 
-  led_matrix__set_pixel(row + 2, column, ball_color);
-  led_matrix__set_pixel(row + 2, column - 1, ball_color);
-  led_matrix__set_pixel(row + 2, column + 1, ball_color);
+  led_matrix__modify_pixel(row + 2, column, ball_color);
+  led_matrix__modify_pixel(row + 2, column - 1, ball_color);
+  led_matrix__modify_pixel(row + 2, column + 1, ball_color);
 }
 
 /**************Setting Lines for Pacman - Ends*****************/
