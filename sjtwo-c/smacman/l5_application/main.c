@@ -18,6 +18,9 @@ extern volatile bool collided;
 static bool green_pacman_start = 0;
 static bool blue_pacman_start = 0;
 
+extern volatile bool collided;
+static bool green_pacman_start = 0;
+static bool blue_pacman_start = 0;
 static void smacman__startup(void);
 
 static void master_task(void *params);
