@@ -282,3 +282,306 @@ void led_matrix__drawPackMan(int row, int column, led_matrix__direction_e direct
   led_matrix__set_line5_pac(row, column, var_up, var_down, var_left, var_right, packman_color);
   led_matrix__set_line6_pac(row, column, var_up, var_down, var_left, var_right, packman_color);
 }
+
+// intro tasks starts
+void led_matrix__display_intro_GridBorder(void) {
+  led_matrix__fill_frame_buffer_inside_grid();
+  led_matrix__color_e border_color = WHITE;
+  data_size data = ((data_size)0x00000C0000300000);
+  for (uint32_t i = 0; i < matrix_width; i++) {
+    led_matrix__set_row_data(i, border_color, data);
+  }
+  led_matrix__display_intro_Ball();
+}
+
+void led_matrix__display_intro_Ball(void) {
+  led_matrix__color_e ball_color = RED;
+  int8_t temp1 = 13, temp2 = 0, count = 1;
+  int row = (matrix_width / 2), col = (matrix_width / 2) - 7; // 38
+  for (int8_t i = 0; i < 7; i++) {
+    for (int8_t j = temp1; j > temp2; j--) {
+      led_matrix__set_pixel(row + i, col + j, ball_color);
+      led_matrix__set_pixel(row - i, col + j, ball_color);
+    }
+    count++;
+    if (count % 2) {
+      temp1--;
+      temp2++;
+    }
+  }
+
+  led_matrix__set_pixel(row + 4, col + 12, ball_color);
+  led_matrix__set_pixel(row - 4, col + 12, ball_color);
+  led_matrix__set_pixel(row + 4, col + 2, ball_color);
+  led_matrix__set_pixel(row - 4, col + 2, ball_color);
+  led_matrix__set_pixel(row + 2, col + 13, ball_color);
+  led_matrix__set_pixel(row - 2, col + 13, ball_color);
+  led_matrix__set_pixel(row + 2, col + 1, ball_color);
+  led_matrix__set_pixel(row - 2, col + 1, ball_color);
+  led_matrix__display_intro_Pacs();
+  led_matrix__display_intro_lines();
+}
+
+void led_matrix__display_intro_Pacs(void) {
+  led_matrix__color_e pac1_color = BLUE, pac2_color = GREEN;
+  int8_t temp1 = 0, temp2 = 4, count = 0;
+  int row = matrix_width - 10, col = (matrix_width / 2), row2 = 10; // 38
+  for (int8_t i = 0; i < 16; i++) {
+    for (int8_t j = temp1; j < temp2; j++) {
+      led_matrix__set_pixel(row - i, col + j, pac1_color);
+      led_matrix__set_pixel(row - i, col - j, pac1_color);
+      led_matrix__set_pixel(row2 + i, col + j, pac2_color);
+      led_matrix__set_pixel(row2 + i, col - j, pac2_color);
+    }
+    if (temp2 < 9) {
+      temp2++;
+    }
+    count++;
+    if (count > 7) {
+      temp1++;
+    }
+  }
+  led_matrix__clear_pixel(row - 10, col - 8);
+  led_matrix__clear_pixel(row - 10, col + 8);
+  led_matrix__clear_pixel(row - 11, col - 8);
+  led_matrix__clear_pixel(row - 11, col + 8);
+  led_matrix__clear_pixel(row - 11, col - 7);
+  led_matrix__clear_pixel(row - 11, col + 7);
+  led_matrix__clear_pixel(row - 12, col - 8);
+  led_matrix__clear_pixel(row - 12, col + 8);
+  led_matrix__clear_pixel(row - 12, col - 7);
+  led_matrix__clear_pixel(row - 12, col + 7);
+  led_matrix__clear_pixel(row - 13, col - 7);
+  led_matrix__clear_pixel(row - 13, col + 7);
+  led_matrix__clear_pixel(row - 13, col - 6);
+  led_matrix__clear_pixel(row - 13, col + 6);
+  led_matrix__clear_pixel(row - 13, col - 8);
+  led_matrix__clear_pixel(row - 13, col + 8);
+  led_matrix__clear_pixel(row - 14, col - 8);
+  led_matrix__clear_pixel(row - 14, col + 8);
+  led_matrix__clear_pixel(row - 14, col - 7);
+  led_matrix__clear_pixel(row - 14, col + 7);
+  led_matrix__clear_pixel(row - 15, col - 8);
+  led_matrix__clear_pixel(row - 15, col + 8);
+
+  // green packman
+  led_matrix__clear_pixel(row2 + 10, col - 8);
+  led_matrix__clear_pixel(row2 + 10, col + 8);
+  led_matrix__clear_pixel(row2 + 11, col - 8);
+  led_matrix__clear_pixel(row2 + 11, col + 8);
+  led_matrix__clear_pixel(row2 + 11, col - 7);
+  led_matrix__clear_pixel(row2 + 11, col + 7);
+  led_matrix__clear_pixel(row2 + 12, col - 8);
+  led_matrix__clear_pixel(row2 + 12, col + 8);
+  led_matrix__clear_pixel(row2 + 12, col - 7);
+  led_matrix__clear_pixel(row2 + 12, col + 7);
+  led_matrix__clear_pixel(row2 + 13, col - 7);
+  led_matrix__clear_pixel(row2 + 13, col + 7);
+  led_matrix__clear_pixel(row2 + 13, col - 6);
+  led_matrix__clear_pixel(row2 + 13, col + 6);
+  led_matrix__clear_pixel(row2 + 13, col - 8);
+  led_matrix__clear_pixel(row2 + 13, col + 8);
+  led_matrix__clear_pixel(row2 + 14, col - 8);
+  led_matrix__clear_pixel(row2 + 14, col + 8);
+  led_matrix__clear_pixel(row2 + 14, col - 7);
+  led_matrix__clear_pixel(row2 + 14, col + 7);
+  led_matrix__clear_pixel(row2 + 15, col - 8);
+  led_matrix__clear_pixel(row2 + 15, col + 8);
+  // led_matrix__clear_pixel(row - 14, col - 6);
+  // led_matrix__clear_pixel(row - 14, col + 6);
+  // led_matrix__set_pixel(row + 4, col + 2, ball_color);
+  // led_matrix__set_pixel(row - 4, col + 2, ball_color);
+  // led_matrix__set_pixel(row + 2, col + 13, ball_color);
+  // led_matrix__set_pixel(row - 2, col + 13, ball_color);
+  // led_matrix__set_pixel(row + 2, col + 1, ball_color);
+  // led_matrix__set_pixel(row - 2, col + 1, ball_color);
+}
+
+void led_matrix__display_intro_lines(void) {
+  led_matrix__color_e line_color = LIME;
+
+  led_graphics__draw_alphabet('s', 3, 4, line_color);
+  led_graphics__draw_alphabet('m', 11, 4, line_color);
+  led_graphics__draw_alphabet('a', 21, 4, line_color);
+  led_graphics__draw_alphabet('c', 29, 4, line_color);
+  led_graphics__draw_alphabet('m', 29 + 6 + 2, 4, line_color);
+  led_graphics__draw_alphabet('a', 38 + 6 + 2, 4, line_color);
+  led_graphics__draw_alphabet('n', 46 + 7, 4, line_color);
+
+  led_graphics__draw_alphabet('s', 13, 49, CYAN);
+  led_graphics__draw_alphabet('t', 21, 49, CYAN);
+  led_graphics__draw_alphabet('a', 30, 49, CYAN);
+  led_graphics__draw_alphabet('r', 38, 49, CYAN);
+  led_graphics__draw_alphabet('t', 46, 49, CYAN);
+}
+
+// intro task ends
+
+void led_graphics__draw_alphabet(char alphabet, int row, int col, led_matrix__color_e line_color) {
+  switch (alphabet) {
+  case 'S':
+  case 's':
+    led_graphics__draw_line_upto_offset(row, col, 6, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 5, 6, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 10, 6, line_color);
+    break;
+  default:
+    break;
+  case 'M':
+  case 'm':
+    led_graphics__draw_line_upto_offset(row, col, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 1, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 2, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 5, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 10, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 6, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 4, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 5, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 10, 1, line_color);
+    break;
+  case 'A':
+  case 'a':
+    led_graphics__draw_line_upto_offset(row, col, 6, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 5, 6, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 10, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 10, 1, line_color);
+    break;
+  case 'C':
+  case 'c':
+    led_graphics__draw_line_upto_offset(row, col + 0, 6, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 5, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 10, 6, line_color);
+    break;
+  case 'N':
+  case 'n':
+    led_graphics__draw_line_upto_offset(row, col + 0, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 5, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 10, 1, line_color);
+
+    led_graphics__draw_line_upto_offset(row + 1, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 6, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 1, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 6, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 2, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 4, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 4, col + 5, 1, line_color);
+
+    led_graphics__draw_line_upto_offset(row + 7, col + 0, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 5, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 7, col + 10, 1, line_color);
+    break;
+
+  case 'R':
+  case 'r':
+    led_graphics__draw_line_upto_offset(row, col, 6, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 5, 6, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row, col + 10, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 1, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 2, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 4, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 5, col + 10, 1, line_color);
+    break;
+
+  case 'T':
+  case 't':
+    led_graphics__draw_line_upto_offset(row, col, 7, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 1, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 2, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 3, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 4, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 5, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 6, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 7, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 8, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 9, 1, line_color);
+    led_graphics__draw_line_upto_offset(row + 3, col + 10, 1, line_color);
+    break;
+  }
+}
+
+void led_graphics__draw_line_upto_offset(int row, int col, int offset, led_matrix__color_e line_color) {
+  for (int i = 0; i < offset; i++)
+    led_matrix__set_pixel(row + i, col, line_color);
+}
