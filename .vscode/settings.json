@@ -9,6 +9,17 @@
         "unordered_map": "c",
         "vector": "c",
         "rope": "c",
-        "game_graphics.h": "c"
+        "game_graphics.h": "c",
+        "lpc_peripherals.h": "c",
+        "lpc40xx.h": "c",
+        "ff.h": "c",
+        "stdint.h": "c",
+        "stddef.h": "c",
+        "semphr.h": "c",
+        "common_macros.h": "c",
+        "acceleration.h": "c",
+        "time.h": "c",
+        "stdio.h": "c",
+        "task.h": "c"
     }
 }
