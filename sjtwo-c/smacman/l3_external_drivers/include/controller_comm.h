@@ -8,7 +8,7 @@
  * <Thread safe by using xyz design>
  */
 #pragma once
-
+// clang-format off
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -117,6 +117,8 @@ uint16_t controller_comm__get_player_1_accel();
 uint16_t controller_comm__get_player_2_accel();
 bool controller_comm__update_player_score(controller_comm__role_e player, uint8_t score);
 void controller_comm__freertos_task(void *controller_comm_struct);
+
+// clang-format on
 
 #ifdef __cplusplus
 } /* extern "C" */

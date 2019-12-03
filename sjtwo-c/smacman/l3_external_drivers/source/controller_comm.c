@@ -1,6 +1,7 @@
 
 
 #include "controller_comm.h"
+// clang-format off
 
 /*******************************************************************************
  *
@@ -335,3 +336,4 @@ bool controller_comm__update_player_score(controller_comm__role_e player, uint8_
     }
 
 }
+// clang-format on
