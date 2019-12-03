@@ -105,7 +105,7 @@ typedef union {
 	    char sender:       2;
 		char recipient:    2; 
 	} __attribute__((packed));
-}__attribute__((packed)) controller_comm__message_header_t;
+} controller_comm__message_header_t;
 
 /*******************************************************************************
  *

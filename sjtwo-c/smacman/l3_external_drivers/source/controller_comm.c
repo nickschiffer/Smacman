@@ -74,7 +74,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
             printf("timeout on receive: stop_byte\n");
             return message;
         }
-        if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != 0xAD) {
+        if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != controller_comm__message_stop_byte) {
             memset(&message, 0, sizeof(controller_comm__message_s));
             puts("failed stop byte");
             for (int i = 0; i < sizeof(message_components); i++) {
@@ -99,7 +99,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
             printf("timeout on receive: stop_byte\n");
             return message;
         }
-        if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != 0xAD) {
+        if ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE] != controller_comm__message_stop_byte) {
             memset(&message, 0, sizeof(controller_comm__message_s));
             printf("failed stop byte, got %X\n", (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE]);
             for (int i = 0; i < sizeof(message_components); i++) {
@@ -258,10 +258,10 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     
     uart__init(uart, clock__get_peripheral_clock_hz(), controller_comm__uart_baud_rate);
     uart__enable_queues(controller.uart, controller.rx_queue, controller.tx_queue);
+    if (role != CONTROLLER_COMM__ROLE_MASTER) {
 #ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
        xTaskCreate(accel_filter__freertos_task, "accel_filter", (2048U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
 #else
-    if (role != CONTROLLER_COMM__ROLE_MASTER){
         (void)acceleration__init();
     }
 #endif
@@ -302,7 +302,6 @@ void controller_comm__freertos_task(void *controller_comm_struct){
             while(1) {
                 controller_comm__message_s message = controller_comm__wait_on_next_message(controller);
                 if (message.recipient == controller.role) { // Is this message for me?
-                    // puts("Controller Received Message");fflush(stdout); 
                     controller_comm__handle_received_message(controller, message);
                 }
             }
