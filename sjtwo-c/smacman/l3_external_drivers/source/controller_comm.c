@@ -146,22 +146,22 @@ static bool controller_comm__send_message(controller_comm_s controller, controll
     }
 }
 
-static bool controller_comm__update_score(controller_comm__message_s message) {
-    // TODO: based on hw config
-    return false;
-}
-
 static bool controller_comm__handle_received_message(controller_comm_s controller, controller_comm__message_s message) {
     switch (message.message_type) {
         case CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL : {
             #ifdef CONTROLLER_COMM__DEBUG
                 puts("Received Request for Accel Value");fflush(stdout);
             #endif
-            if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_1) {
-                controller_comm__player_1_score = (uint8_t)message.data;
+            uint8_t new_player_score = (uint8_t)message.data;
+            if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_1
+                && controller_comm__player_1_score != new_player_score) {
+                controller_comm__player_1_score = new_player_score;
+                if(!score_display__write_score((uint16_t)new_player_score)) return false;
             }
-            else if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2) {
+            else if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2
+                    && controller_comm__player_2_score != new_player_score) {
                 controller_comm__player_2_score = (uint8_t)message.data;
+                if(!score_display__write_score((uint16_t)new_player_score)) return false;
             }
             controller_comm__message_s message_reply = {0};
             message_reply.recipient    = message.sender;
@@ -260,12 +260,13 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     uart__init(uart, clock__get_peripheral_clock_hz(), controller_comm__uart_baud_rate);
     uart__enable_queues(controller.uart, controller.rx_queue, controller.tx_queue);
     if (role != CONTROLLER_COMM__ROLE_MASTER) {
+        score_display__init();
 #ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
        xTaskCreate(accel_filter__freertos_task, "accel_filter", (2048U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
 #else
         (void)acceleration__init();
-    }
 #endif
+    }
     return controller;
 }
 void controller_comm__freertos_task(void *controller_comm_struct){

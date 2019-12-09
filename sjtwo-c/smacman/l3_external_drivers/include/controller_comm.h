@@ -29,6 +29,7 @@ extern "C" {
 #include "queue.h"
 #include "portmacro.h"
 #include "string.h"
+#include "score_display.h"
 
 /*******************************************************************************
  *
