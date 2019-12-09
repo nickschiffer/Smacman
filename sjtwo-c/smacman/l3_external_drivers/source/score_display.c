@@ -36,7 +36,7 @@ bool score_display__init() {
     gpio__construct_with_function(SCORE_DISPLAY__SCL_GPIO_PORT, SCORE_DISPLAY__SCL_GPIO_PIN, GPIO__FUNCTION_2);  //setup GPIO pins
     if(!i2c__write_single(SCORE_DISPLAY__I2C_DEVICE,SCORE_DISPLAY__I2C_ADDRESS, HT16K33_CMD_OSCILLATOR | HT16K33_ON, 0x00)) return false; // turn on oscillator
     if(!score_display__set_blink_rate(HT16K33_BLINK_OFF)) return false;
-    if(!score_display__set_brightness(15)) return false; // set brightness to max
+    if(!score_display__set_brightness(HT16K33_MAX_BRIGHTNESS)) return false; // set brightness to max
     if(!score_display__write_score(0)) return false;
     return true;
 }
