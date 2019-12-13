@@ -80,10 +80,13 @@ void led_matrix__set_row_data(int row, led_matrix__color_e color, uint64_t data)
 void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint64_t data);
 void led_matrix__clear_frame_buffer();
 void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color);
+void led_matrix__fill_frame_buffer_inside_grid();
+void led_matrix__fill_frame_buffer_inside_grid_lower_half();
+void led_matrix__fill_frame_buffer_inside_grid_upper_half();
 void led_matrix__update_display();
 
 void led_matrix_clear_frame_buffer_inside_grid(data_size data);
 
-void led_matrix__fill_frame_buffer_inside_grid();
-void led_matrix__fill_frame_buffer_inside_grid_lower_half();
-void led_matrix__fill_frame_buffer_inside_grid_upper_half();
+// void led_matrix__fill_frame_buffer_inside_grid();
+// void led_matrix__fill_frame_buffer_inside_grid_lower_half();
+// void led_matrix__fill_frame_buffer_inside_grid_upper_half();
