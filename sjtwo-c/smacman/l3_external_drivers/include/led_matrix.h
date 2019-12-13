@@ -12,7 +12,7 @@
 #define row_bound 32UL
 #define data_size uint64_t
 
-#define SMACMAN__ENABLE_DEBUGGING 1
+#define SMACMAN__ENABLE_DEBUGGING 0
 
 #if SMACMAN__ENABLE_DEBUGGING
 #include <stdio.h>
@@ -29,16 +29,6 @@
 static const data_size ALL_INSIDE_GRID = 0x0FFFFFFFFFFFFFF0;
 static const data_size LOWER_INSIDE_GRID = 0x00000000FFFFFFF0;
 static const data_size UPPER_INSIDE_GRID = 0x0FFFFFFF00000000;
-
-/**
- * r1,g1,b1 --> for first  32 rows
- * r2,g2,b2 --> for second 32 rows
- * a,b,c,d,e --> each row select - 2^5 = 32
- * oe --> inverted set low to enable display
- * latch --> set high to enable latch
- * clk
- **/
-static gpio_s r1, g1, b1, r2, g2, b2, A, B, C, D, E, oe, latch, clk;
 
 typedef enum { // RGB (000 => Off)
   OFF,

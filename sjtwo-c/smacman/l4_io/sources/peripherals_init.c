@@ -45,9 +45,11 @@ static void peripherals_init__mount_sd_card(void) {
   static FATFS sd_card_drive;
 
   const BYTE option_mount_later = 0; // Actually mounts later when the first file is accessed
+  const BYTE option_mount_now = 1;   // Actually mounts later when the first file is accessed
   const TCHAR *default_drive = (const TCHAR *)"";
 
-  f_mount(&sd_card_drive, default_drive, option_mount_later);
+  // f_mount(&sd_card_drive, default_drive, option_mount_later);
+  f_mount(&sd_card_drive, default_drive, option_mount_now);
 }
 
 static void peripherals_init__uart0_init(void) {

@@ -1,13 +1,154 @@
 #include "mp3.h"
 
-gpio_s XDCS, CS, RST, DREQ;
+static gpio_s XDCS, CS, RST, DREQ;
 
-static QueueHandle_t mp3_data_queue;
-static xSemaphoreHandle signal_for_mp3;
+void mp3__set_xdcs_low() { gpio__reset(XDCS); }
 
-static FIL fp;
+void mp3__set_xdcs_high() { gpio__set(XDCS); }
 
-void mp3_pins_init() {
+void mp3__set_dcs(bool s) {
+  if (s == false) {
+    mp3__set_xdcs_low();
+  } else {
+    mp3__set_xdcs_high();
+  }
+}
+
+bool mp3__ready_for_data(void) {
+  // while (!gpio__get(DREQ)) {
+  //   vTaskDelay(1);
+  // }
+  return gpio__get(DREQ);
+}
+
+// bool mp3__ready_for_data() { return gpio__get(DREQ); }
+
+void mp3__sci_write(uint8_t addr, uint16_t data) {
+  gpio__reset(CS);
+  c_ssp2__exchange_byte(VS1053_SCI_WRITE);
+  c_ssp2__exchange_byte(addr);
+  c_ssp2__exchange_byte(data >> 8);
+  c_ssp2__exchange_byte(data & 0xFF);
+  gpio__set(CS);
+}
+
+uint16_t mp3__sci_read(uint8_t addr) {
+  uint16_t data;
+
+  gpio__reset(CS);
+  c_ssp2__exchange_byte(VS1053_SCI_READ);
+  c_ssp2__exchange_byte(addr);
+
+  // delay_us(10);
+  data = c_ssp2__exchange_byte(0xFF);
+  data <<= 8;
+  data |= c_ssp2__exchange_byte(0xFF);
+  gpio__set(CS);
+  return data;
+}
+
+void mp3__reset(void) {
+  gpio__reset(RST);
+  delay__ms(100);
+  gpio__set(RST);
+  gpio__set(CS);
+  gpio__set(XDCS);
+  delay__ms(100);
+  mp3__sci_write(VS1053_REG_MODE, VS1053_MODE_SM_SDINEW | VS1053_MODE_SM_RESET);
+  delay__ms(200);
+  printf("Waiting for dreq\n");
+  while (!mp3__ready_for_data())
+    ;
+  mp3__sci_write(VS1053_REG_CLOCKF, 0x6000);
+}
+
+void mp3__set_volume(uint8_t left, uint8_t right) {
+  uint16_t vol;
+  vol = left;
+  vol <<= 8;
+  vol |= right;
+  mp3__sci_write(VS1053_REG_VOLUME, vol);
+}
+
+void mp3__set_bass_treble(uint8_t b, uint8_t t) {
+  uint16_t setting;
+  setting = (15 | (b << 4) | (1 << 8) | (t << 12));
+  mp3__sci_write(VS1053_REG_BASS, setting);
+}
+
+void mp3__init_song() {
+  mp3__sci_write(VS1053_REG_MODE, VS1053_MODE_SM_LINE1 | VS1053_MODE_SM_SDINEW);
+  mp3__sci_write(VS1053_REG_WRAMADDR, 0xC017);
+  mp3__sci_write(VS1053_REG_WRAM, 3);
+  mp3__sci_write(VS1053_REG_WRAMADDR, 0xC019);
+  mp3__sci_write(VS1053_REG_WRAM, 0);
+  mp3__sci_write(VS1053_REG_DECODETIME, 0x00);
+  mp3__sci_write(VS1053_REG_DECODETIME, 0x00);
+}
+
+void mp3__send_data(uint8_t *buffer, uint16_t buffsize) {
+  while (!mp3__ready_for_data())
+    ;
+  mp3__set_xdcs_low();
+
+  // for (uint8_t i = 0; i < buffsize; i++) {
+  //   if ((buffsize % 32) == 0) {
+  //     while (!mp3__ready_for_data())
+  //       ;
+  //   }
+  //   fprintf(stderr, "%x\n", buffer[i]);
+  //   c_ssp2__exchange_byte(buffer[i]);
+  // }
+  // printf("End of chunk\n");
+
+  while (buffsize--) {
+    // printf("%d\n", buffsize);
+    // printf("%x\n", buffer[0]);
+    if ((buffsize % 32) == 0) {
+      while (!mp3__ready_for_data())
+        ;
+    }
+    c_ssp2__exchange_byte(buffer[0]);
+    buffer++;
+  }
+
+  mp3__set_xdcs_high();
+}
+
+void mp3__sine_test(uint8_t n, uint16_t ms) {
+  uint16_t mode = mp3__sci_read(VS1053_REG_MODE);
+  mode |= 0x0020;
+  mp3__sci_write(VS1053_REG_MODE, mode);
+
+  while (!mp3__ready_for_data())
+    ;
+
+  gpio__reset(XDCS);
+  c_ssp2__exchange_byte(0x53);
+  c_ssp2__exchange_byte(0xEF);
+  c_ssp2__exchange_byte(0x6E);
+  c_ssp2__exchange_byte(n);
+  c_ssp2__exchange_byte(0x00);
+  c_ssp2__exchange_byte(0x00);
+  c_ssp2__exchange_byte(0x00);
+  c_ssp2__exchange_byte(0x00);
+  gpio__set(XDCS);
+
+  delay__ms(ms);
+
+  gpio__reset(XDCS);
+  c_ssp2__exchange_byte(0x45);
+  c_ssp2__exchange_byte(0x78);
+  c_ssp2__exchange_byte(0x69);
+  c_ssp2__exchange_byte(0x74);
+  c_ssp2__exchange_byte(0x00);
+  c_ssp2__exchange_byte(0x00);
+  c_ssp2__exchange_byte(0x00);
+  c_ssp2__exchange_byte(0x00);
+  gpio__set(XDCS);
+}
+
+static void mp3__pins_init() {
   XDCS = gpio__construct_with_function(4, 28, GPIO__FUNCITON_0_IO_PIN);
   CS = gpio__construct_with_function(4, 29, GPIO__FUNCITON_0_IO_PIN);
   RST = gpio__construct_with_function(0, 6, GPIO__FUNCITON_0_IO_PIN);
@@ -16,147 +157,64 @@ void mp3_pins_init() {
   gpio__set_as_output(CS);
   gpio__set_as_output(RST);
   gpio__set_as_input(DREQ);
-
-  ssp2__initialize(24 * 1000);
-  write_to_sci_reg(SCI_CLK_REG, 0x20, 0x00);
-  write_to_sci_reg(SCI_VOL_REG, 0x00, 0x00);
-}
-
-void wait_for_dreq(void) {
-  while (!gpio__get(DREQ)) {
-    vTaskDelay(1);
-  }
-}
-
-void write_to_sci_reg(char addr, char msb, char lsb) {
-  wait_for_dreq();
-  gpio__reset(CS);
-  ssp2__exchange_byte(SCI_WRITE_OPCODE);
-  ssp2__exchange_byte(addr);
-  ssp2__exchange_byte(msb);
-  ssp2__exchange_byte(lsb);
+  gpio__set(XDCS);
   gpio__set(CS);
+  gpio__reset(RST);
 }
 
-void send_sdi_byte(uint8_t byte) { ssp2__exchange_byte(byte); }
-
-void set_xdcs_low() { gpio__reset(XDCS); }
-
-void set_xdcs_high() { gpio__set(XDCS); }
-
-bool mp3_init() {
-  mp3_pins_init();
-  //   mp3_data_queue = xQueueCreate(DATA_SIZE, sizeof(uint8_t));
-  //   read_dir();
-  //   if (open_file("song.mp3", &fp)) {
-  file_init();
+bool mp3__init() {
+  // ssp2__initialize(12 * 1000);
+  c_ssp2__init(8);
+  mp3__pins_init();
+  mp3__reset();
+  uint8_t v = (mp3__sci_read(VS1053_REG_STATUS) >> 4) & 0x0F;
+  SMACMAN__DEBUG_PRINTF("Version =  %u\n", v);
+  return (v == 4);
 }
 
-bool file_init() {
-  signal_for_mp3 = xSemaphoreCreateBinary();
-  mp3_data_queue = xQueueCreate(DATA_SIZE, sizeof(uint8_t));
-  if (open_file("song.mp3", &fp) == false) {
-    SMACMAN__DEBUG_PRINTF("File Not Opened\n");
-  } else {
-    SMACMAN__DEBUG_PRINTF("File opened\n");
-  }
-}
-
-bool mp3_read_from_sd() { return read_data_from_sd_and_put_in_queue(&fp); }
-
-bool open_file(char *filepath, FIL *fp1) {
-  FRESULT ret_code = f_open(fp1, filepath, FA_READ);
-  if (ret_code != FR_OK) {
-    return false;
-  }
-  return true;
-}
-
-void close_file() { f_close(&fp); }
-
-bool read_data_from_sd_and_put_in_queue(FIL *fp1) {
-  uint8_t data_buffer[DATA_SIZE];
-  uint32_t bytes_read = 0;
-  FRESULT ret_code = f_read(&fp, (void *)data_buffer, DATA_SIZE, &bytes_read);
-  if (ret_code != FR_OK) {
-    SMACMAN__DEBUG_PRINTF("Data Not Read Properly\n");
-    close_file();
-    // vTaskDelay(10);
-    open_file("song.mp3", &fp);
-    return false;
-  } else {
-    if (bytes_read > 0) {
-      // xSemaphoreGive(signal_for_mp3);
-      xQueueSend(mp3_data_queue, &data_buffer, portMAX_DELAY);
-      SMACMAN__DEBUG_PRINTF("Data Sent to Queue = %s\n", data_buffer);
+void mp3__play_sounds_task(void *xGameSoundsQueueHandle) {
+  xQueueHandle *xGameSoundsQueue = (xQueueHandle *)xGameSoundsQueueHandle;
+  int which_sound;
+  while (1) {
+    xQueueReceive(*xGameSoundsQueue, &which_sound, portMAX_DELAY);
+    switch (which_sound) {
+    case 1:
+    default:
+      mp3__reset();
+      mp3__sine_test(0x01, 1000);
+      // vTaskDelay(1000);
+      mp3__reset();
+      break;
     }
-  }
-  return true;
-}
-
-void mp3_play_song_from_queue() {
-  uint8_t data_buffer[DATA_SIZE];
-  // if(xSemaphoreTake(signal_for_mp3)){
-  if (xQueueReceive(mp3_data_queue, &data_buffer, portMAX_DELAY)) {
-    for (int i = 0; i < DATA_SIZE; i += MP3_PROCESSING_SIZE) {
-      wait_for_dreq();
-      set_xdcs_low();
-      for (int j = 0; j < MP3_PROCESSING_SIZE; j++) {
-        SMACMAN__DEBUG_PRINTF(".");
-        send_sdi_byte(data_buffer[i + j]);
-      }
-      set_xdcs_high();
-    }
-  }
-  // }
-}
-
-void read_dir() {
-  FRESULT status;       // File status return structure
-  DIR dir;              // Directory structure
-  static FILINFO finfo; // File info structure
-
-  status = f_opendir(&dir, "1:"); // Open directory ("1:" = SD card)
-
-  if (status == FR_OK) // If directory open successfully
-  {
-    // while (1)
-    {
-      status = f_readdir(&dir, &finfo); // Read filename and store in file info structure
-
-      if (status != FR_OK || finfo.fname[0] == 0) // Exit on error or end of directory
-      {
-        SMACMAN__DEBUG_PRINTF("Error Reading Directory\n");
-        // break;
-      }
-
-      if (!(finfo.fattrib & AM_DIR)) // If not a sub-directory
-      {
-        SMACMAN__DEBUG_PRINTF("%s\n", finfo.fname);
-        // sprintf(fileName[totalFileNumber], "1:%s", finfo.fname); // Store "1:" + filename into song name buffer
-        // sprintf(playlist[totalFileNumber], "%s", finfo.fname); // Store original filename into play list
-        // totalFileNumber++;
-      }
-    }
-
-    f_closedir(&dir); // Close directory
-  } else {
-    SMACMAN__DEBUG_PRINTF("Directory Not Open\n");
+    printf("Played Sound\n");
   }
 }
 
-uint16_t sci_read(uint8_t addr) {
-  uint16_t data;
-
-  // cs_.setLow();
-  gpio__reset(CS);
-  ssp2__exchange_byte(SCI_READ_OPCODE);
-  ssp2__exchange_byte(addr);
-
-  // delay_us(10);
-  data = ssp2__exchange_byte(0x00);
-  data <<= 8;
-  data |= ssp2__exchange_byte(0x00);
-  gpio__set(CS);
-  return data;
+void mp3__play_track_task(void *songQueueHandle) {
+  xQueueHandle *xSongQueue = (xQueueHandle *)songQueueHandle;
+  uint8_t songBuff[VS1053_DATABUFFERLEN];
+  mp3__init_song();
+  while (1) {
+    // if(xQueueReceive(xVolumeQueue, &re_state, 0)) {
+    //     if(re_state == kLEFT_TURN) {
+    //         if(vol < minVol)
+    //             vol += 2;
+    //         myPlayer.setVolume(vol, vol);
+    //     }
+    //     else if(re_state == kRIGHT_TURN) {
+    //         if (vol > maxVol)
+    //             vol -= 2;
+    //         myPlayer.setVolume(vol, vol);
+    //     }
+    // }
+    // if (isBT) {
+    //     myPlayer.setBassTreble(bass, treble);
+    //     isBT = 0;
+    // }
+    xQueueReceive(*xSongQueue, songBuff, portMAX_DELAY);
+    mp3__send_data(songBuff, VS1053_DATABUFFERLEN);
+    SMACMAN__DEBUG_PRINTF("Data Received in Queue = %s\n", songBuff);
+    // printf("Data Received in Queue = %s\n", songBuff);
+    vTaskDelay(15);
+  }
 }

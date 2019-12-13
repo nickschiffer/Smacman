@@ -1,6 +1,16 @@
 
 #include "led_matrix.h"
 
+/**
+ * r1,g1,b1 --> for first  32 rows
+ * r2,g2,b2 --> for second 32 rows
+ * a,b,c,d,e --> each row select - 2^5 = 32
+ * oe --> inverted set low to enable display
+ * latch --> set high to enable latch
+ * clk
+ **/
+static gpio_s r1, g1, b1, r2, g2, b2, A, B, C, D, E, oe, latch, clk;
+
 void led_matrix__init() {
   r1 = gpio__construct_with_function(GPIO__PORT_2, 0, GPIO__FUNCITON_0_IO_PIN);
   g1 = gpio__construct_with_function(GPIO__PORT_2, 1, GPIO__FUNCITON_0_IO_PIN);

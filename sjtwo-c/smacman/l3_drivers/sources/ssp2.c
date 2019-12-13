@@ -71,6 +71,10 @@ void ssp2__set_max_clock(uint32_t max_clock_khz) {
 }
 
 uint8_t ssp2__exchange_byte(uint8_t byte_to_transmit) {
+  // uint8_t byte_to_transmit_msb;
+  // for (int i = 0; i < 8; i++) {
+  //   byte_to_transmit_msb |= ((byte_to_transmit >> i) & 0x01) << (7 - i);
+  // }
   LPC_SSP2->DR = byte_to_transmit;
 
   while (LPC_SSP2->SR & (1 << 4)) {
