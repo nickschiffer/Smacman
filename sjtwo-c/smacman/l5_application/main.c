@@ -112,8 +112,8 @@ static void master_task(void *params) {
       common__splash_screen(); // WIll Show splash screen in the start;
       xReturned = create_task_game(pacman_level_task[which_pacman_level], "blue_pacman", 2048, &blue_pacman_init_level2,
                                    PRIORITY_LOW, &xHandle[blue_pacman], TASK_SUSPENDED);
-      xReturned = create_task_game(pacman_level_task[which_pacman_level], "green_pacman", 2048, &green_pacman_init_level2,
-                                   PRIORITY_LOW, &xHandle[green_pacman], TASK_SUSPENDED);
+      xReturned = create_task_game(pacman_level_task[which_pacman_level], "green_pacman", 2048,
+                                   &green_pacman_init_level2, PRIORITY_LOW, &xHandle[green_pacman], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_blue", 2048, &blue_paddle, PRIORITY_MEDIUM,
                                    &xHandle[paddle_blue], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_green", 2048, &green_paddle, PRIORITY_MEDIUM,
