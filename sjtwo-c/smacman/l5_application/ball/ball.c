@@ -34,10 +34,31 @@ void ball_task(void *params) {
       ball.col = (ball.yDir > 0) ? ball.col + 1 : ball.col - 1; // up:down
 
       // Paddle Collision
-      bool left_blue = gpio__get(switch0);
-      bool right_blue = gpio__get(switch1);
-      bool left_green = gpio__get(switch2);
-      bool right_green = gpio__get(switch3);
+
+      // bool left_blue = gpio__get(switch0);
+      // bool right_blue = gpio__get(switch1);
+      // bool left_green = gpio__get(switch2);
+      // bool right_green = gpio__get(switch3);
+
+      bool left_blue = false;
+      bool right_blue = false;
+      bool left_green = false;
+      bool right_green = false;
+      paddle_direction_e green_pacman_direction;
+      paddle_direction_e blue_pacman_direction;
+      xQueueReceive(blue_paddle_direction_queue, &blue_pacman_direction, 0);
+      xQueueReceive(green_paddle_direction_queue, &green_pacman_direction, 0);
+      // SMACMAN__DEBUG_PRINTF("Direction for Blue Paddle is %i\n", blue_pacman_direction);
+      if (blue_pacman_direction == PADDLE_DIRECTION_LEFT) {
+        left_blue = true;
+      } else if (blue_pacman_direction == PADDLE_DIRECTION_RIGHT) {
+        right_blue = true;
+      }
+      if (green_pacman_direction == PADDLE_DIRECTION_LEFT) {
+        left_green = true;
+      } else if (green_pacman_direction == PADDLE_DIRECTION_RIGHT) {
+        right_green = true;
+      }
 
       if (ball.col == 6) {
         if ((led_matrix__get_pixel(ball.row, 3) != 0) || (led_matrix__get_pixel(ball.row - 1, 3) != 0) ||

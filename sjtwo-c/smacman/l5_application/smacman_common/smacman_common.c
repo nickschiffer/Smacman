@@ -2,6 +2,9 @@
 #include "ball.h"
 #include "game_logic.h"
 
+QueueHandle_t blue_paddle_direction_queue;
+QueueHandle_t green_paddle_direction_queue;
+
 void common__splash_screen() {
 
   led_matrix__display_intro_GridBorder();

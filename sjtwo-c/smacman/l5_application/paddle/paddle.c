@@ -28,6 +28,14 @@ void paddle_task(void *task_param) {
       left = gpio__get(switch0);
       right = gpio__get(switch1);
 #endif
+      if (left) {
+        paddle_direction_e blue_pacman_direction = PADDLE_DIRECTION_LEFT;
+        xQueueSend(blue_paddle_direction_queue, &blue_pacman_direction, 0);
+      } else if (right) {
+        paddle_direction_e blue_pacman_direction = PADDLE_DIRECTION_RIGHT;
+        xQueueSend(blue_paddle_direction_queue, &blue_pacman_direction, 0);
+      }
+
     } else {
 #if SMACMAN_CONTROLLER_CONNECTED
       uint16_t dir = controller_comm__get_player_2_accel();
@@ -43,6 +51,13 @@ void paddle_task(void *task_param) {
       left = gpio__get(switch2);
       right = gpio__get(switch3);
 #endif
+      if (left) {
+        paddle_direction_e green_pacman_direction = PADDLE_DIRECTION_LEFT;
+        xQueueSend(green_paddle_direction_queue, &green_pacman_direction, 0);
+      } else if (right) {
+        paddle_direction_e green_pacman_direction = PADDLE_DIRECTION_RIGHT;
+        xQueueSend(green_paddle_direction_queue, &green_pacman_direction, 0);
+      }
     }
     if (left) {
       direction = LEFT_DOWN;

@@ -48,6 +48,9 @@ ball_param ball_level_queue;
 
 int main(void) {
   state_main_queue = xQueueCreate(1, sizeof(game_logic_game_state_s));
+  blue_paddle_direction_queue = xQueueCreate(1, sizeof(paddle_direction_e));
+  green_paddle_direction_queue = xQueueCreate(1, sizeof(paddle_direction_e));
+
   ball_level_queue.state_queue = &state_main_queue;
   smacman__startup();
   // mutex_for_spi = xSemaphoreCreateMutex();
@@ -57,12 +60,12 @@ int main(void) {
   acceleration__axis_data_s sensor_avg_value;
   sensor_avg_value = acceleration__get_data();
   srand(sensor_avg_value.x + sensor_avg_value.z);
-
+#if SMACMAN_CONTROLLER_CONNECTED
   controller = controller_comm__init(CONTROLLER_COMM__ROLE_MASTER, UART__3, gpio_tx, gpio_rx);
 
   xTaskCreate(controller_comm__freertos_task, "controller", (5000U / sizeof(void *)), (void *)&controller, PRIORITY_LOW,
               NULL);
-
+#endif
   xTaskCreate(master_task, "master_task", (4096U / sizeof(void *)), NULL, PRIORITY_CRITICAL, NULL);
   xTaskCreate(display_task, "Display_Task", (1024U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
 
