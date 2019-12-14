@@ -11,7 +11,7 @@
 #include "queue.h"
 
 #define SMACMAN__ENABLE_DEBUGGING 1
-#define SMACMAN_CONTROLLER_CONNECTED 1
+#define SMACMAN_CONTROLLER_CONNECTED 0
 
 #if SMACMAN__ENABLE_DEBUGGING
 #include <stdio.h>

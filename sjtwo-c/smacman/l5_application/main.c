@@ -46,29 +46,6 @@ pacman_s blue_pacman_init_level1, green_pacman_init_level1, blue_pacman_init_lev
 QueueHandle_t state_main_queue;
 ball_param ball_level_queue;
 
-// static void file_read(void *params) {
-//   // open_file("song.mp3", &fp);
-//   while (1) {
-//     // if (xSemaphoreTake(mutex_for_spi, 1000)) {
-//     if (!mp3_read_from_sd()) {
-//       fprintf(stderr, "Failed Sleeping indefinetly\n");
-//       vTaskDelay(1000);
-//       // break;
-//     }
-//     xSemaphoreGive(mutex_for_spi);
-//     // }
-//   }
-// }
-
-// static void mp3_play(void *params) {
-//   while (1) {
-//     if (xSemaphoreTake(mutex_for_spi, 1000)) {
-//       mp3_play_song_from_queue();
-//       // xSemaphoreGive(mutex_for_spi);
-//     }
-//   }
-// }
-
 int main(void) {
   state_main_queue = xQueueCreate(1, sizeof(game_logic_game_state_s));
   ball_level_queue.state_queue = &state_main_queue;
@@ -132,10 +109,10 @@ static void master_task(void *params) {
     switch (game_current_state) {
     case INIT_STATE:
       common__splash_screen(); // WIll Show splash screen in the start;
-      xReturned = create_task_game(pacman_task_level2, "blue_pacman", 2048, &blue_pacman_init_level2, PRIORITY_LOW,
-                                   &xHandle[blue_pacman], TASK_SUSPENDED);
-      xReturned = create_task_game(pacman_task_level2, "green_pacman", 2048, &green_pacman_init_level2, PRIORITY_LOW,
-                                   &xHandle[green_pacman], TASK_SUSPENDED);
+      xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_2], "blue_pacman", 2048, &blue_pacman_init_level2,
+                                   PRIORITY_LOW, &xHandle[blue_pacman], TASK_SUSPENDED);
+      xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_2], "green_pacman", 2048, &green_pacman_init_level2,
+                                   PRIORITY_LOW, &xHandle[green_pacman], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_blue", 2048, &blue_paddle, PRIORITY_MEDIUM,
                                    &xHandle[paddle_blue], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_green", 2048, &green_paddle, PRIORITY_MEDIUM,

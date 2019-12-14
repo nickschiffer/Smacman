@@ -20,6 +20,8 @@
         "acceleration.h": "c",
         "time.h": "c",
         "stdio.h": "c",
-        "task.h": "c"
+        "task.h": "c",
+        "pacman_graphics.h": "c",
+        "pacman.h": "c"
     }
 }

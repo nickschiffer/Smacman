@@ -22,5 +22,10 @@ void pacman_task_level1(void *task_param);
 void pacman_task_level2(void *task_param);
 void pacman_task_level3(void *task_param);
 
+typedef enum { PACMAN_LEVEL_1 = 0, PACMAN_LEVEL_2, PACMAN_LEVEL_3 } pacman_level_e;
+
+static function__task_f pacman_level_task[3] = {
+    [0] = pacman_task_level1, [1] = pacman_task_level2, [2] = pacman_task_level3};
+
 // void blue_pacman_task(void *params);
 // void green_pacman_task(void *params);
