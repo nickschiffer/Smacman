@@ -7,25 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "smacman_common.h"
+
 #define matrix_height 64UL
 #define matrix_width 64UL
 #define row_bound 32UL
 #define data_size uint64_t
-
-#define SMACMAN__ENABLE_DEBUGGING 1
-#define SMACMAN_CONTROLLER_CONNECTED 1
-
-#if SMACMAN__ENABLE_DEBUGGING
-#include <stdio.h>
-#define SMACMAN__DEBUG_PRINTF(f_, ...)                                                                                 \
-  do {                                                                                                                 \
-    fprintf(stderr, "SMACMAN:");                                                                                       \
-    fprintf(stderr, (f_), ##__VA_ARGS__);                                                                              \
-    fprintf(stderr, "\n");                                                                                             \
-  } while (0)
-#else
-#define SMACMAN__DEBUG_PRINTF(f_, ...) /* NOOP */
-#endif
 
 static const data_size ALL_INSIDE_GRID = 0x0FFFFFFFFFFFFFF0;
 static const data_size LOWER_INSIDE_GRID = 0x00000000FFFFFFF0;

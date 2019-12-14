@@ -14,6 +14,7 @@
 #include "mp3.h"
 #include "queue.h"
 #include "semphr.h"
+#include "smacman_common.h"
 
 xSemaphoreHandle mutex_for_spi;
 static controller_comm_s controller;
@@ -34,6 +35,8 @@ static void display_task(void *params);
 
 static BaseType_t create_task_game(void *function_name, char *task_name, uint32_t stack_size, void *p, uint8_t priority,
                                    TaskHandle_t *xTaskHandle, bool is_suspended);
+
+void controller_gpio_init();
 
 gpio_s led0, led1, led2, led3;
 gpio_s switch0, switch1, switch2, switch3;
@@ -66,16 +69,10 @@ ball_param ball_level_queue;
 //   }
 // }
 
-void controller_gpio_init() {
-  gpio_tx = gpio__construct_as_output(GPIO__PORT_4, 28);
-  gpio_rx = gpio__construct_as_input(GPIO__PORT_4, 29);
-}
-
 int main(void) {
   state_main_queue = xQueueCreate(1, sizeof(game_logic_game_state_s));
   ball_level_queue.state_queue = &state_main_queue;
   smacman__startup();
-  controller_gpio_init();
   // mutex_for_spi = xSemaphoreCreateMutex();
   mutex_for_spi = xSemaphoreCreateBinary();
   // ssp2__initialize(24 * 1000);
@@ -134,6 +131,7 @@ static void master_task(void *params) {
     // get_game_state();
     switch (game_current_state) {
     case INIT_STATE:
+      common__splash_screen(); // WIll Show splash screen in the start;
       xReturned = create_task_game(pacman_task_level2, "blue_pacman", 2048, &blue_pacman_init_level2, PRIORITY_LOW,
                                    &xHandle[blue_pacman], TASK_SUSPENDED);
       xReturned = create_task_game(pacman_task_level2, "green_pacman", 2048, &green_pacman_init_level2, PRIORITY_LOW,
@@ -147,9 +145,16 @@ static void master_task(void *params) {
 
       xReturned = create_task_game(score_task, "players_score", 2048, NULL, PRIORITY_MEDIUM, &xHandle[players_score],
                                    TASK_NOT_SUSPENDED);
+#if SMACMAN_CONTROLLER_CONNECTED
+#else
+      vTaskDelay(5000);
+#endif
       set_game_state(IN_PROGRESS_STATE);
+#if SMACMAN_CONTROLLER_CONNECTED
+#else
       temp_game_current_state_send = IN_PROGRESS_STATE;
       xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+#endif
       // game_current_state = IN_PROGRESS_STATE;
       break;
     case IN_PROGRESS_STATE:
@@ -181,45 +186,21 @@ static void master_task(void *params) {
   }
 }
 
-static void controller_poll_ready_or_pause_and_take_action() {
-  uint8_t player1_counter = 0, player2_counter = 0;
-  bool current_switch_player_1, current_switch_player_2;
-  game_logic_game_state_s game_current_set_state;
-  current_switch_player_1 = controller_com__get_player_1_button();
-
-  if (current_switch_player_1 == true) {
-    if ((player1_counter % 2) == 0) {
-      game_current_set_state = IN_PROGRESS_STATE;
-      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
-    } else {
-      game_current_set_state = IN_PAUSE_STATE;
-      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
-    }
-    player1_counter++;
-  }
-  current_switch_player_2 = controller_com__get_player_2_button();
-  if (current_switch_player_2 == true) {
-    if ((player2_counter % 2) == 0) {
-      game_current_set_state = IN_PROGRESS_STATE;
-      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
-    } else {
-      game_current_set_state = IN_PAUSE_STATE;
-      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
-    }
-    player1_counter++;
-  }
-}
-
 static void display_task(void *params) {
   led_matrix__displayGridBorders(PINK);
 
   while (true) {
 #if SMACMAN_CONTROLLER_CONNECTED
-    (void)controller_poll_ready_or_pause_and_take_action();
+    (void)controller_poll_ready_or_pause_and_take_action(ball_level_queue.state_queue);
 #endif
     led_matrix__update_display();
     vTaskDelay(5);
   }
+}
+
+void controller_gpio_init() {
+  gpio_tx = gpio__construct_as_output(GPIO__PORT_4, 28);
+  gpio_rx = gpio__construct_as_input(GPIO__PORT_4, 29);
 }
 
 static void smacman__startup(void) {
@@ -269,4 +250,7 @@ static void smacman__startup(void) {
   gpio__set(led3);
 
   led_matrix__init();
+#if SMACMAN_CONTROLLER_CONNECTED
+  controller_gpio_init();
+#endif
 }
