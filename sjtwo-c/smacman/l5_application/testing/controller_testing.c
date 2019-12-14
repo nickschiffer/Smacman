@@ -40,7 +40,7 @@ gpio_rx = gpio__construct_as_input(GPIO__PORT_4, 29);
   controller = controller_comm__init(CONTROLLER_COMM__ROLE_MASTER, UART__3, gpio_tx, gpio_rx);
 #endif
 
-xTaskCreate(controller_comm__freertos_task, "controller", (10000U / sizeof(void *)), (void *) &controller, PRIORITY_LOW, NULL);  
+xTaskCreate(controller_comm__freertos_task, "controller", (5000U / sizeof(void *)), (void *) &controller, PRIORITY_LOW, NULL);  
 
   // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
   // Change '#if 0' to '#if 1' and vice versa to try it out

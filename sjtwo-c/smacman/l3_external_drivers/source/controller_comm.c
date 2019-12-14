@@ -291,7 +291,9 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
         gpiolab__set_as_input(controller_comm__button_gpio_port, controller_comm__button_gpio_pin);
         gpiolab__attach_interrupt(controller_comm__button_gpio_port, controller_comm__button_gpio_pin, GPIO_INTR__RISING_EDGE, button_isr);
         gpiolab__enable_interrupts();
-        score_display__init();
+        if (score_display__init()) {
+            puts("Display Init Successful");
+        }
 #ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
        xTaskCreate(accel_filter__freertos_task, "accel_filter", (2048U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
 #else
@@ -315,16 +317,17 @@ void controller_comm__freertos_task(void *controller_comm_struct){
                 do {
                     // printf("master sending request\n");
                     controller_comm__master_request_accel(controller, CONTROLLER_COMM__ROLE_PLAYER_1);
-                    vTaskDelay(pdMS_TO_TICKS(50));
+                    vTaskDelay(pdMS_TO_TICKS(100));
                     reply = controller_comm__wait_on_next_message(controller);
                     message_count++;
                 } while (reply.recipient + reply.sender == 0);
                 message_success_count++;
                 controller_comm__master_update_controller_states(reply);
                 #ifdef CONTROLLER_COMM__DEBUG
-                    // puts("Master (me) Requested Accel Value from Player 1\n");
-                    // printf("value received: %u\n\n", reply.data);
-                    printf("success rate: %lu / %lu\n", message_success_count, message_count);
+                    puts("Master (me) Requested Accel Value from Player 1\n");
+                    printf("value received: %u\n", reply.data);
+                    printf("button pressed? %s\n\n", controller_com__get_player_1_button() ? "yes" : "no");
+                    //printf("success rate: %lu / %lu\n", message_success_count, message_count);
                 #endif
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
@@ -332,6 +335,7 @@ void controller_comm__freertos_task(void *controller_comm_struct){
         }
         case CONTROLLER_COMM__ROLE_PLAYER_1:
         case CONTROLLER_COMM__ROLE_PLAYER_2: {
+            score_display__init();
             while(1) {
                 controller_comm__message_s message = controller_comm__wait_on_next_message(controller);
                 if (message.recipient == controller.role) { // Is this message for me?

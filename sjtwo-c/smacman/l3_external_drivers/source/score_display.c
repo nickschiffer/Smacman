@@ -63,6 +63,6 @@ bool score_display__set_brightness(uint8_t brightness) {
 
 bool score_display__set_blink_rate(score_display__blink_rate_e blink_rate) {
     if (blink_rate < HT16K33_BLINK_OFF || blink_rate > HT16K33_BLINK_HALFHZ) return false;
-    return i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_BLINK_CMD | blink_rate, 0x00);
+    return i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_BLINK_CMD | HT16K33_ON | (blink_rate << 1), 0x00);
 }
 // clang-format on
