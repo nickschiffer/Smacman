@@ -19,6 +19,7 @@ extern "C" {
 
 #include "uart.h"
 #include "gpio.h"
+#include "gpio_lab.h"
 #ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
     #include "accel_filter.h"
 #else
@@ -44,6 +45,9 @@ const static uint32_t controller_comm__message_receive_timeout_ms      = 10;
 const static uint8_t  controller_comm__message_start_byte              = 0xDE;
 const static uint8_t  controller_comm__message_stop_byte               = 0xAD;
 const static uint32_t controller_comm__master_rx_retry_threshold       = 10;
+const static gpio__port_e controller_comm__button_gpio_port            = GPIO__PORT_0;
+const static uint32_t controller_comm__button_gpio_pin                 = 1;
+const static TickType_t controller_comm__button_press_filter_time_ms   = 300;      
 
 /*******************************************************************************
  *
@@ -116,6 +120,8 @@ typedef union {
 controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uart, gpio_s gpio_tx, gpio_s gpio_rx);
 uint16_t controller_comm__get_player_1_accel();
 uint16_t controller_comm__get_player_2_accel();
+bool controller_com__get_player_1_button();
+bool controller_com__get_player_2_button();
 bool controller_comm__update_player_score(controller_comm__role_e player, uint8_t score);
 void controller_comm__freertos_task(void *controller_comm_struct);
 

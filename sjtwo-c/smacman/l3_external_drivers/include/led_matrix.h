@@ -13,6 +13,7 @@
 #define data_size uint64_t
 
 #define SMACMAN__ENABLE_DEBUGGING 1
+#define SMACMAN_CONTROLLER_CONNECTED 1
 
 #if SMACMAN__ENABLE_DEBUGGING
 #include <stdio.h>

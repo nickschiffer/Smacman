@@ -8,12 +8,14 @@
  *               P R I V A T E    D A T A    D E F I N I T I O N S
  *
  ******************************************************************************/
-static uint16_t      controller_comm__player_1_accel       = 0;
-static uint16_t      controller_comm__player_2_accel       = 0;
-static uint8_t       controller_comm__player_1_score       = 0;
-static uint8_t       controller_comm__player_2_score       = 0;
-static bool          controller_comm__button_1_is_pressed  = false;
-static bool          controller_comm__button_2_is_pressed  = false;
+static uint16_t      controller_comm__player_1_accel         = 0;
+static uint16_t      controller_comm__player_2_accel         = 0;
+static uint8_t       controller_comm__player_1_score         = 0;
+static uint8_t       controller_comm__player_2_score         = 0;
+static bool          controller_comm__button_1_is_pressed    = false;
+static bool          controller_comm__button_2_is_pressed    = false;
+static QueueHandle_t controller_comm__button_queue           = NULL;
+static TickType_t    controller_comm__last_button_press_time = 0;
 /*******************************************************************************
  *
  *                     P R I V A T E    F U N C T I O N S
@@ -166,9 +168,20 @@ static bool controller_comm__handle_received_message(controller_comm_s controlle
             controller_comm__message_s message_reply = {0};
             message_reply.recipient    = message.sender;
             message_reply.sender       = controller.role;
+            char c = 'n';
+            if (xQueueReceive(controller_comm__button_queue, &c, 0)) {
+                if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_1) {
+                    controller_comm__button_1_is_pressed = true;
+                }
+                else if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2) {
+                    controller_comm__button_2_is_pressed = true;
+                }
+            }
             if ((controller.role == CONTROLLER_COMM__ROLE_PLAYER_1 && controller_comm__button_1_is_pressed) ||
                 (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2 && controller_comm__button_2_is_pressed)) {
                 message.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED;
+                controller_comm__button_1_is_pressed = false;
+                controller_comm__button_2_is_pressed = false;
             }
             else {
                 message_reply.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL;
@@ -218,8 +231,8 @@ static void controller_comm__master_update_controller_states(controller_comm__me
         }
     }
     else {
-        controller_comm__button_1_is_pressed = false;
-        controller_comm__button_2_is_pressed = false;
+        // controller_comm__button_1_is_pressed = false;
+        // controller_comm__button_2_is_pressed = false;
     }
 }
 
@@ -237,6 +250,18 @@ bool controller_comm__check_message_integrity(controller_comm__message_s message
 }
 #endif
 
+void button_isr() {
+    TickType_t current_time_ms =  xTaskGetTickCountFromISR();
+    if (current_time_ms < controller_comm__last_button_press_time + controller_comm__button_press_filter_time_ms) {
+        return;
+    }
+    else {
+        controller_comm__last_button_press_time = current_time_ms;
+        char c = 'p';
+        xQueueSendFromISR(controller_comm__button_queue, &c, NULL);
+    }
+}
+
 
 /*******************************************************************************
  *
@@ -251,7 +276,8 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     controller.tx_queue = xQueueCreate(controller_comm__tx_queue_size, sizeof(char));
     controller.gpio_rx = gpio_rx;
     controller.gpio_tx = gpio_tx;
-
+    
+    // set up UART
     gpio__set_as_input(controller.gpio_rx);
     gpio__set_as_output(controller.gpio_tx);
     gpio__set_function(controller.gpio_rx, GPIO__FUNCTION_2);
@@ -260,7 +286,14 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     uart__init(uart, clock__get_peripheral_clock_hz(), controller_comm__uart_baud_rate);
     uart__enable_queues(controller.uart, controller.rx_queue, controller.tx_queue);
     if (role != CONTROLLER_COMM__ROLE_MASTER) {
-        score_display__init();
+        // set up Button
+        controller_comm__button_queue = xQueueCreate(1, sizeof(char));
+        gpiolab__set_as_input(controller_comm__button_gpio_port, controller_comm__button_gpio_pin);
+        gpiolab__attach_interrupt(controller_comm__button_gpio_port, controller_comm__button_gpio_pin, GPIO_INTR__RISING_EDGE, button_isr);
+        gpiolab__enable_interrupts();
+        if (score_display__init()) {
+            puts("Display Init Successful");
+        }
 #ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
        xTaskCreate(accel_filter__freertos_task, "accel_filter", (2048U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
 #else
@@ -284,16 +317,17 @@ void controller_comm__freertos_task(void *controller_comm_struct){
                 do {
                     // printf("master sending request\n");
                     controller_comm__master_request_accel(controller, CONTROLLER_COMM__ROLE_PLAYER_1);
-                    vTaskDelay(pdMS_TO_TICKS(50));
+                    vTaskDelay(pdMS_TO_TICKS(100));
                     reply = controller_comm__wait_on_next_message(controller);
                     message_count++;
                 } while (reply.recipient + reply.sender == 0);
                 message_success_count++;
                 controller_comm__master_update_controller_states(reply);
                 #ifdef CONTROLLER_COMM__DEBUG
-                    // puts("Master (me) Requested Accel Value from Player 1\n");
-                    // printf("value received: %u\n\n", reply.data);
-                    printf("success rate: %lu / %lu\n", message_success_count, message_count);
+                    puts("Master (me) Requested Accel Value from Player 1\n");
+                    printf("value received: %u\n", reply.data);
+                    printf("button pressed? %s\n\n", controller_com__get_player_1_button() ? "yes" : "no");
+                    //printf("success rate: %lu / %lu\n", message_success_count, message_count);
                 #endif
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
@@ -301,6 +335,7 @@ void controller_comm__freertos_task(void *controller_comm_struct){
         }
         case CONTROLLER_COMM__ROLE_PLAYER_1:
         case CONTROLLER_COMM__ROLE_PLAYER_2: {
+            score_display__init();
             while(1) {
                 controller_comm__message_s message = controller_comm__wait_on_next_message(controller);
                 if (message.recipient == controller.role) { // Is this message for me?
@@ -336,5 +371,23 @@ bool controller_comm__update_player_score(controller_comm__role_e player, uint8_
         return false;
     }
 
+}
+bool controller_com__get_player_1_button() {
+    if (controller_comm__button_1_is_pressed) {
+        controller_comm__button_1_is_pressed = false;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+bool controller_com__get_player_2_button() {
+     if (controller_comm__button_2_is_pressed) {
+        controller_comm__button_2_is_pressed = false;
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 // clang-format on

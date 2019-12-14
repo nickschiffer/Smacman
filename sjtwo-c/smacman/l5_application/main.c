@@ -43,28 +43,28 @@ pacman_s blue_pacman_init_level1, green_pacman_init_level1, blue_pacman_init_lev
 QueueHandle_t state_main_queue;
 ball_param ball_level_queue;
 
-static void file_read(void *params) {
-  // open_file("song.mp3", &fp);
-  while (1) {
-    // if (xSemaphoreTake(mutex_for_spi, 1000)) {
-    if (!mp3_read_from_sd()) {
-      fprintf(stderr, "Failed Sleeping indefinetly\n");
-      vTaskDelay(1000);
-      // break;
-    }
-    xSemaphoreGive(mutex_for_spi);
-    // }
-  }
-}
+// static void file_read(void *params) {
+//   // open_file("song.mp3", &fp);
+//   while (1) {
+//     // if (xSemaphoreTake(mutex_for_spi, 1000)) {
+//     if (!mp3_read_from_sd()) {
+//       fprintf(stderr, "Failed Sleeping indefinetly\n");
+//       vTaskDelay(1000);
+//       // break;
+//     }
+//     xSemaphoreGive(mutex_for_spi);
+//     // }
+//   }
+// }
 
-static void mp3_play(void *params) {
-  while (1) {
-    if (xSemaphoreTake(mutex_for_spi, 1000)) {
-      mp3_play_song_from_queue();
-      // xSemaphoreGive(mutex_for_spi);
-    }
-  }
-}
+// static void mp3_play(void *params) {
+//   while (1) {
+//     if (xSemaphoreTake(mutex_for_spi, 1000)) {
+//       mp3_play_song_from_queue();
+//       // xSemaphoreGive(mutex_for_spi);
+//     }
+//   }
+// }
 
 void controller_gpio_init() {
   gpio_tx = gpio__construct_as_output(GPIO__PORT_4, 28);
@@ -89,22 +89,8 @@ int main(void) {
   xTaskCreate(controller_comm__freertos_task, "controller", (5000U / sizeof(void *)), (void *)&controller, PRIORITY_LOW,
               NULL);
 
-  // mp3_init();
-  // file_init();
-  // uint8_t v = (sci_read(VS1053_REG_STATUS) >> 4) & 0x0F;
-  // printf("Version: %d\n", v);
-  // printf("Mode = 0x%x\n", sci_read(VS1053_REG_MODE));
-  // printf("Stat = 0x%x\n", sci_read(VS1053_REG_STATUS));
-  // printf("ClkF = 0x%x\n", sci_read(VS1053_REG_CLOCKF));
-  // printf("Vol. = 0x%x\n", sci_read(VS1053_REG_VOLUME));
   xTaskCreate(master_task, "master_task", (4096U / sizeof(void *)), NULL, PRIORITY_CRITICAL, NULL);
   xTaskCreate(display_task, "Display_Task", (1024U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
-  // if (v == 4) {
-  // xTaskCreate(file_read, "file_read", (8192U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);
-  // xTaskCreate(mp3_play, "mp3_play", (8192U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
-  // }
-
-  // xTaskCreateRestricted()
 
 #if 0
   // SMACMAN__DEBUG_PRINTF() takes more stack space, size this tasks' stack higher
@@ -174,6 +160,7 @@ static void master_task(void *params) {
       vTaskResume(xHandle[paddle_green]);
       vTaskResume(xHandle[ball]);
       break;
+    case IN_PAUSE_STATE:
     case IN_SCORE_STATE:
       vTaskSuspend(xHandle[blue_pacman]);
       vTaskSuspend(xHandle[green_pacman]);
@@ -194,10 +181,42 @@ static void master_task(void *params) {
   }
 }
 
+static void controller_poll_ready_or_pause_and_take_action() {
+  uint8_t player1_counter = 0, player2_counter = 0;
+  bool current_switch_player_1, current_switch_player_2;
+  game_logic_game_state_s game_current_set_state;
+  current_switch_player_1 = controller_com__get_player_1_button();
+
+  if (current_switch_player_1 == true) {
+    if ((player1_counter % 2) == 0) {
+      game_current_set_state = IN_PROGRESS_STATE;
+      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
+    } else {
+      game_current_set_state = IN_PAUSE_STATE;
+      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
+    }
+    player1_counter++;
+  }
+  current_switch_player_2 = controller_com__get_player_2_button();
+  if (current_switch_player_2 == true) {
+    if ((player2_counter % 2) == 0) {
+      game_current_set_state = IN_PROGRESS_STATE;
+      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
+    } else {
+      game_current_set_state = IN_PAUSE_STATE;
+      xQueueSend(*(ball_level_queue.state_queue), &game_current_set_state, portMAX_DELAY);
+    }
+    player1_counter++;
+  }
+}
+
 static void display_task(void *params) {
   led_matrix__displayGridBorders(PINK);
 
   while (true) {
+#if SMACMAN_CONTROLLER_CONNECTED
+    (void)controller_poll_ready_or_pause_and_take_action();
+#endif
     led_matrix__update_display();
     vTaskDelay(5);
   }

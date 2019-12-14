@@ -14,7 +14,7 @@ void paddle_task(void *task_param) {
   led_matrix__direction_e direction;
   while (true) {
     if (pad_setup.paddle_color == BLUE) {
-#ifdef USE_ACCEL
+#if SMACMAN_CONTROLLER_CONNECTED
       uint16_t dir = controller_comm__get_player_1_accel();
       if (dir == 0) {
         left = 0;
@@ -29,7 +29,7 @@ void paddle_task(void *task_param) {
       right = gpio__get(switch1);
 #endif
     } else {
-#ifdef USE_ACCEL
+#if SMACMAN_CONTROLLER_CONNECTED
       uint16_t dir = controller_comm__get_player_2_accel();
       if (dir == 0) {
         left = 0;

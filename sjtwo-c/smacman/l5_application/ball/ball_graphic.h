@@ -1,7 +1,7 @@
 #pragma once
 #include "ball.h"
 
-typedef enum { INIT_STATE = 0, IN_PROGRESS_STATE = 1, IN_SCORE_STATE = 2 } game_logic_game_state_s;
+typedef enum { INIT_STATE = 0, IN_PROGRESS_STATE = 1, IN_SCORE_STATE = 2, IN_PAUSE_STATE = 3 } game_logic_game_state_s;
 
 void increase_ball_x(ball_s *ball);
 void decrease_ball_x(ball_s *ball);
