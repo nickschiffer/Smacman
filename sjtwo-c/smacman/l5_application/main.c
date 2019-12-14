@@ -99,6 +99,7 @@ static void master_task(void *params) {
   game_logic_game_state_s temp_game_current_state_send = INIT_STATE; // INIT_STATE;
   BaseType_t xReturned;
   TaskHandle_t xHandle[6] = {NULL};
+  pacman_level_e which_pacman_level = PACMAN_LEVEL_2;
 
   xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
 
@@ -109,9 +110,9 @@ static void master_task(void *params) {
     switch (game_current_state) {
     case INIT_STATE:
       common__splash_screen(); // WIll Show splash screen in the start;
-      xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_2], "blue_pacman", 2048, &blue_pacman_init_level2,
+      xReturned = create_task_game(pacman_level_task[which_pacman_level], "blue_pacman", 2048, &blue_pacman_init_level2,
                                    PRIORITY_LOW, &xHandle[blue_pacman], TASK_SUSPENDED);
-      xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_2], "green_pacman", 2048, &green_pacman_init_level2,
+      xReturned = create_task_game(pacman_level_task[which_pacman_level], "green_pacman", 2048, &green_pacman_init_level2,
                                    PRIORITY_LOW, &xHandle[green_pacman], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_blue", 2048, &blue_paddle, PRIORITY_MEDIUM,
                                    &xHandle[paddle_blue], TASK_SUSPENDED);
