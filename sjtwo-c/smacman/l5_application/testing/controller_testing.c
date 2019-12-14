@@ -10,13 +10,23 @@
 #include "sj2_cli.h"
 #include "controller_comm.h"
 
-#define PLAYER_1
-//#define MASTER
+//#define PLAYER_1
+#define MASTER
 
 static controller_comm_s controller;
 static gpio_s gpio_tx, gpio_rx;
 
+void score_increment(void *pvParams) {
+    uint16_t count = 0;
+    while(1) {
+      controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_1, count++);
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
+  }
+
 int main(void) {
+
+  
 
 // gpio_tx = gpio__construct_with_function(GPIO__PORT_4, 28,GPIO__FUNCTION_2);
 // gpio_rx = gpio__construct_with_function(GPIO__PORT_4, 29,GPIO__FUNCTION_2);
@@ -41,7 +51,7 @@ gpio_rx = gpio__construct_as_input(GPIO__PORT_4, 29);
 #endif
 
 xTaskCreate(controller_comm__freertos_task, "controller", (5000U / sizeof(void *)), (void *) &controller, PRIORITY_LOW, NULL);  
-
+xTaskCreate(score_increment, "score increment", 2048 / sizeof(void *), NULL, PRIORITY_LOW, NULL);
   // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
   // Change '#if 0' to '#if 1' and vice versa to try it out
 #if 0

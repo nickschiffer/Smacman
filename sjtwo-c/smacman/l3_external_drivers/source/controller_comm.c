@@ -107,7 +107,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
             printf("failed stop byte, got %X\n", (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE]);
             for (int i = 0; i < sizeof(message_components); i++) {
                 printf("message components[%d] = %u\n", i, (uint8_t)message_components[i]);
-            }   
+            } 
             return message;
         }
     }
@@ -116,6 +116,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
 #endif
     message.recipient = (controller_comm__role_e) (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_RECIPIENT];
     message.sender    = (controller_comm__role_e) (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_SENDER];
+    message.message_type = (controller_comm__message_type_e) (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_TYPE];
     message.data      = ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE2] << 8 
                       |  (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE1]) & 0xFFFF;
 #ifdef CONTROLLER_COMM__CHECKSUM
@@ -179,7 +180,7 @@ static bool controller_comm__handle_received_message(controller_comm_s controlle
             }
             if ((controller.role == CONTROLLER_COMM__ROLE_PLAYER_1 && controller_comm__button_1_is_pressed) ||
                 (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2 && controller_comm__button_2_is_pressed)) {
-                message.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED;
+                message_reply.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED;
                 controller_comm__button_1_is_pressed = false;
                 controller_comm__button_2_is_pressed = false;
             }
@@ -288,6 +289,7 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     if (role != CONTROLLER_COMM__ROLE_MASTER) {
         // set up Button
         controller_comm__button_queue = xQueueCreate(1, sizeof(char));
+        gpiolab__enable_gpio();
         gpiolab__set_as_input(controller_comm__button_gpio_port, controller_comm__button_gpio_pin);
         gpiolab__attach_interrupt(controller_comm__button_gpio_port, controller_comm__button_gpio_pin, GPIO_INTR__RISING_EDGE, button_isr);
         gpiolab__enable_interrupts();

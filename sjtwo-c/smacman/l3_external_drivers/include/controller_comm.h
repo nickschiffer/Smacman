@@ -45,9 +45,9 @@ const static uint32_t controller_comm__message_receive_timeout_ms      = 10;
 const static uint8_t  controller_comm__message_start_byte              = 0xDE;
 const static uint8_t  controller_comm__message_stop_byte               = 0xAD;
 const static uint32_t controller_comm__master_rx_retry_threshold       = 10;
-const static gpio__port_e controller_comm__button_gpio_port            = GPIO__PORT_0;
+const static gpio__port_e controller_comm__button_gpio_port            = GPIO_0;
 const static uint32_t controller_comm__button_gpio_pin                 = 1;
-const static TickType_t controller_comm__button_press_filter_time_ms   = 300;      
+const static TickType_t controller_comm__button_press_filter_time_ms   = 400;      
 
 /*******************************************************************************
  *
