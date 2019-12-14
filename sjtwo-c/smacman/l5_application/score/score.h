@@ -2,5 +2,6 @@
 #include "ball_graphic.h"
 #include "game_graphics.h"
 #include "led_graphics.h"
+#include "led_matrix.h"
 
-void display_score(int score_blue, int score_green);
+void score_task(void *task_param);

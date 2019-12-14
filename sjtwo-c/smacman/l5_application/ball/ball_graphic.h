@@ -1,6 +1,8 @@
 #pragma once
 #include "ball.h"
 
+typedef enum { INIT_STATE = 0, IN_PROGRESS_STATE = 1, IN_SCORE_STATE = 2 } game_logic_game_state_s;
+
 void increase_ball_x(ball_s *ball);
 void decrease_ball_x(ball_s *ball);
 void ball_setup(ball_s *ball);
@@ -17,10 +19,9 @@ bool get_green_pacman_start(void);
 void set_ball_position_direction(ball_s *ball);
 ball_s get_ball_position_direction(void);
 
-// Setter and Getter for ball half location
-void set_ball_in_green_half(bool in_green_half);
-void set_ball_in_blue_half(bool in_blue_half);
-bool isBallInGreenHalf();
-bool isBallinBlueHalf();
+// Setter and Getter for blue/green player
+void set_players_score(uint8_t score_green, uint8_t score_blue);
 
-// Setter and Getter for starboard/port side
+uint8_t get_blue_player_score(void);
+
+uint8_t get_green_player_score(void);

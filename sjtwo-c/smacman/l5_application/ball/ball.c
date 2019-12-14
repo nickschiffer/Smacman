@@ -6,8 +6,10 @@ gpio_s switch0, switch1, switch2, switch3;
 
 // Columns - along X-axis, Rows - along Y-axis
 void ball_task(void *params) {
+
+  game_logic_game_state_s change_game_state_to;
   ball_s ball;
-  int ball_level = *(int *)params;
+  ball_param ball_parameters = *(ball_param *)params;
   static uint8_t count = 1;
   ball_setup(&ball);
   uint8_t score_blue = 0, score_green = 0;
@@ -55,7 +57,11 @@ void ball_task(void *params) {
       // oppponent scores
       if (ball.col == 3) {
         score_green += cummulative_score;
-        display_score(score_green, score_blue);
+        set_players_score(score_green, score_blue);
+        // set_game_state(IN_SCORE_STATE);
+        change_game_state_to = IN_SCORE_STATE;
+        xQueueSend(*(ball_parameters.state_queue), &change_game_state_to, 0);
+        // display_score(score_green, score_blue);
         cummulative_score = 1;
         // led_matrix__cleanBall(ball.row - 1, ball.col - 1);
         SMACMAN__DEBUG_PRINTF("GREEN player scored\n");
@@ -84,7 +90,11 @@ void ball_task(void *params) {
       if (ball.col == matrix_width - 4) {
         // led_matrix__cleanBall(ball.row - 1, ball.col - 1);
         score_blue += cummulative_score;
-        display_score(score_green, score_blue);
+        set_players_score(score_green, score_blue);
+        change_game_state_to = IN_SCORE_STATE;
+        xQueueSend(*(ball_parameters.state_queue), &change_game_state_to, 0);
+        // set_game_state(IN_SCORE_STATE);
+        // display_score(score_green, score_blue);
         cummulative_score = 1;
         SMACMAN__DEBUG_PRINTF("BLUE player scored\n");
         SMACMAN__DEBUG_PRINTF("BLUE player score: %d   GREEN player score: %d\n", score_blue, score_green);
@@ -94,11 +104,11 @@ void ball_task(void *params) {
       }
     }
 
-    if ((ball.col == matrix_width / 2 - 1) || (ball.col == matrix_width / 2 + 1) && (ball_level != 3)) {
+    if ((ball.col == matrix_width / 2 - 2) || (ball.col == matrix_width / 2 + 2) && (ball_parameters.level != 3)) {
       // printf("Setting ball position\n");
       set_ball_position_direction(&ball);
     }
-    if ((ball_level == 3)) {
+    if ((ball_parameters.level == 3)) {
       set_ball_position_direction(&ball);
     }
 
@@ -108,7 +118,11 @@ void ball_task(void *params) {
     if (blue_collided == 1) {
       blue_collided = clear_blue_collided();
       score_blue += cummulative_score;
-      display_score(score_green, score_blue);
+      set_players_score(score_green, score_blue);
+      change_game_state_to = IN_SCORE_STATE;
+      xQueueSend(*(ball_parameters.state_queue), &change_game_state_to, 0);
+      // set_game_state(IN_SCORE_STATE);
+      // display_score(score_green, score_blue);
       cummulative_score = 1;
       SMACMAN__DEBUG_PRINTF("BLUE player score: %d   GREEN player score: %d\n", score_blue, score_green);
       set_blue_pacman_start();
@@ -118,8 +132,14 @@ void ball_task(void *params) {
     if (green_collided == 1) {
       green_collided = clear_green_collided();
       score_green += cummulative_score;
-      display_score(score_green, score_blue);
-      led_matrix__fill_frame_buffer_inside_grid();
+      set_players_score(score_green, score_blue);
+      change_game_state_to = IN_SCORE_STATE;
+      xQueueSend(*(ball_parameters.state_queue), &change_game_state_to, 0);
+
+      // set_game_state(IN_SCORE_STATE);
+
+      // display_score(score_green, score_blue);
+      // led_matrix__fill_frame_buffer_inside_grid();
       cummulative_score = 1;
       SMACMAN__DEBUG_PRINTF("BLUE player score: %d   GREEN player score: %d\n", score_blue, score_green);
       set_blue_pacman_start();

@@ -14,11 +14,35 @@ void paddle_task(void *task_param) {
   led_matrix__direction_e direction;
   while (true) {
     if (pad_setup.paddle_color == BLUE) {
+#ifdef USE_ACCEL
+      uint16_t dir = controller_comm__get_player_1_accel();
+      if (dir == 0) {
+        left = 0;
+        right = 0;
+      } else if (dir < 2000) {
+        left = 1;
+      } else {
+        right = 1;
+      }
+#else
       left = gpio__get(switch0);
       right = gpio__get(switch1);
+#endif
     } else {
+#ifdef USE_ACCEL
+      uint16_t dir = controller_comm__get_player_2_accel();
+      if (dir == 0) {
+        left = 0;
+        right = 0;
+      } else if (dir < 2000) {
+        left = 1;
+      } else {
+        right = 1;
+      }
+#else
       left = gpio__get(switch2);
       right = gpio__get(switch3);
+#endif
     }
     if (left) {
       direction = LEFT_DOWN;

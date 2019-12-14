@@ -284,108 +284,110 @@ void pacman_task_level1(void *task_param) {
 
 /// level2
 void pacman_task_level2(void *task_param) {
-    pacman_s pacman = *(pacman_s *)task_param;
-    
-    bool blue_pacman_start, green_pacman_start;
-    game_graphics_players pac_player;
-    ball_s ball_pos;
-    // starboard=> right side of the board, port=> leftside of the port
-    int8_t ball_starboard = 0, ball_port = 0;
-    bool initial_display = 1;
-    // bool start_detection;
-    while (true) {
-        // Task for blue
-        if (pacman.packman_color == BLUE) {
-            pac_player = PLAYER_1;
-            blue_pacman_start = get_blue_pacman_start();
-            if (blue_pacman_start == 1) {
-                clear_blue_pacman_start();
-                pacman.row_left_upordown = 2;
-                pacman.row_right_upordown = matrix_width - 3;
-                pacman.direction = RIGHT_UP;
-            }
-            // Which half is the ball located in
-            ball_pos = get_ball_position_direction();
-            
-            if (ball_pos.col == ((matrix_width / 2) + 2) && ball_pos.yDir > 0) {
-                ball_starboard = ball_pos.xDir < 0 ? 1 : 0;
-                ball_port = ball_pos.xDir > 0 ? 1 : 0;
-            }
-        }
-        // Task for green
-        else if (pacman.packman_color == GREEN) {
-            pac_player = PLAYER_2;
-            green_pacman_start = get_green_pacman_start();
-            if (green_pacman_start == 1) {
-                clear_green_pacman_start();
-                pacman.row_left_upordown = 2;
-                pacman.row_right_upordown = matrix_width - 3;
-                pacman.direction = LEFT_UP;
-            }
-            ball_pos = get_ball_position_direction();
-            
-            if (ball_pos.col == ((matrix_width / 2) - 2) && ball_pos.yDir < 0) {
-                // printf("%i\n", ball_pos.xDir);
-                ball_starboard = ball_pos.xDir < 0 ? 1 : 0;
-                ball_port = ball_pos.xDir > 0 ? 1 : 0;
-            }
-        }
-        
-        // start_detection = get_start_detection();
-        
-        // If pacman is moving in left direction
-        if (pacman.direction == LEFT_UP && (ball_starboard == 1 || ball_port == 1 || initial_display == 1)) {
-            initial_display = 0;
-            if (pacman.packman_color == BLUE) {
-                led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
-            } else {
-                led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
-            }
-            switch (pacman.row_left_upordown) {
-                case 2 ... matrix_width - 8:
-                    game_graphics_packman(pacman.row_left_upordown, pacman.col_leftorrigt_up, pacman.direction,
-                                          pacman.packman_color, pac_player);
-                    // led_matrix__update_display();
-                    pacman.row_left_upordown =
-                    (ball_starboard == 1) ? (pacman.row_left_upordown + 1) : (pacman.row_left_upordown + 2);
-                    break;
-                case matrix_width - 7 ... matrix_width: // Check this condition
-                    ball_starboard = 0;
-                    ball_port = 0;
-                    initial_display = 1;
-                    pacman.direction = RIGHT_UP;
-                    pacman.row_left_upordown = 2;
-                    break;
-            }
-        }
-        // If pacman is moving in right direction
-        if (pacman.direction == RIGHT_UP && (ball_port == 1 || ball_starboard == 1 || initial_display == 1)) {
-            initial_display = 0;
-            if (pacman.packman_color == BLUE) {
-                led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
-            } else {
-                led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
-            }
-            switch (pacman.row_right_upordown) {
-                case 7 ... matrix_width - 3:
-                    game_graphics_packman(pacman.row_right_upordown, pacman.col_leftorrigt_up, pacman.direction,
-                                          pacman.packman_color, pac_player);
-                    // led_matrix__update_display();
-                    pacman.row_right_upordown =
-                    (ball_port == 1) ? (pacman.row_right_upordown - 1) : (pacman.row_right_upordown - 2);
-                    break;
-                case 0 ... 6: // Check this condition
-                    ball_starboard = 0;
-                    ball_port = 0;
-                    initial_display = 1;
-                    pacman.direction = LEFT_UP;
-                    pacman.row_right_upordown = matrix_width - 3;
-                    break;
-            }
-        }
-        
-        vTaskDelay(100);
+  pacman_s pacman = *(pacman_s *)task_param;
+
+  bool blue_pacman_start, green_pacman_start;
+  game_graphics_players pac_player;
+  ball_s ball_pos;
+  // starboard=> right side of the board, port=> leftside of the port
+  int8_t ball_starboard = 0, ball_port = 0;
+  bool initial_display = 1;
+  // bool start_detection;
+  while (true) {
+    // Task for blue
+    if (pacman.packman_color == BLUE) {
+      pac_player = PLAYER_1;
+      blue_pacman_start = get_blue_pacman_start();
+      if (blue_pacman_start == 1) {
+        clear_blue_pacman_start();
+        pacman.row_left_upordown = 2;
+        initial_display = 1;
+        pacman.row_right_upordown = matrix_width - 3;
+        pacman.direction = RIGHT_UP;
+      }
+      // Which half is the ball located in
+      ball_pos = get_ball_position_direction();
+
+      if (ball_pos.col == ((matrix_width / 2) + 2) && ball_pos.yDir > 0) {
+        ball_starboard = ball_pos.xDir < 0 ? 1 : 0;
+        ball_port = ball_pos.xDir > 0 ? 1 : 0;
+      }
     }
+    // Task for green
+    else if (pacman.packman_color == GREEN) {
+      pac_player = PLAYER_2;
+      green_pacman_start = get_green_pacman_start();
+      if (green_pacman_start == 1) {
+        clear_green_pacman_start();
+        pacman.row_left_upordown = 2;
+        initial_display = 1;
+        pacman.row_right_upordown = matrix_width - 3;
+        pacman.direction = LEFT_UP;
+      }
+      ball_pos = get_ball_position_direction();
+
+      if (ball_pos.col == ((matrix_width / 2) - 2) && ball_pos.yDir < 0) {
+        // printf("%i\n", ball_pos.xDir);
+        ball_starboard = ball_pos.xDir < 0 ? 1 : 0;
+        ball_port = ball_pos.xDir > 0 ? 1 : 0;
+      }
+    }
+
+    // start_detection = get_start_detection();
+
+    // If pacman is moving in left direction
+    if (pacman.direction == LEFT_UP && (ball_starboard == 1 || ball_port == 1 || initial_display == 1)) {
+      initial_display = 0;
+      if (pacman.packman_color == BLUE) {
+        led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
+      } else {
+        led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
+      }
+      switch (pacman.row_left_upordown) {
+      case 2 ... matrix_width - 8:
+        game_graphics_packman(pacman.row_left_upordown, pacman.col_leftorrigt_up, pacman.direction,
+                              pacman.packman_color, pac_player);
+        // led_matrix__update_display();
+        pacman.row_left_upordown =
+            (ball_starboard == 1) ? (pacman.row_left_upordown + 1) : (pacman.row_left_upordown + 2);
+        break;
+      case matrix_width - 7 ... matrix_width: // Check this condition
+        ball_starboard = 0;
+        ball_port = 0;
+        initial_display = 1;
+        pacman.direction = RIGHT_UP;
+        pacman.row_left_upordown = 2;
+        break;
+      }
+    }
+    // If pacman is moving in right direction
+    if (pacman.direction == RIGHT_UP && (ball_port == 1 || ball_starboard == 1 || initial_display == 1)) {
+      initial_display = 0;
+      if (pacman.packman_color == BLUE) {
+        led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
+      } else {
+        led_matrix__fill_frame_buffer_inside_grid_lower_half(); // Player 2
+      }
+      switch (pacman.row_right_upordown) {
+      case 7 ... matrix_width - 3:
+        game_graphics_packman(pacman.row_right_upordown, pacman.col_leftorrigt_up, pacman.direction,
+                              pacman.packman_color, pac_player);
+        // led_matrix__update_display();
+        pacman.row_right_upordown =
+            (ball_port == 1) ? (pacman.row_right_upordown - 1) : (pacman.row_right_upordown - 2);
+        break;
+      case 0 ... 6: // Check this condition
+        ball_starboard = 0;
+        ball_port = 0;
+        initial_display = 1;
+        pacman.direction = LEFT_UP;
+        pacman.row_right_upordown = matrix_width - 3;
+        break;
+      }
+    }
+
+    vTaskDelay(100);
+  }
 }
 /// level3
 void pacman_task_level3(void *task_param) {
