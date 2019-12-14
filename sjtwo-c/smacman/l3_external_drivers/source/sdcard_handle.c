@@ -40,7 +40,7 @@ void sdcard_handle__read_song_task(void *songQueueHandle) {
   uint32_t bytes_read = VS1053_DATABUFFERLEN;
   FIL mySong;
   while (1) {
-    FRESULT ret_code = f_open(&mySong, "pacman_death.wav", FA_READ);
+    FRESULT ret_code = f_open(&mySong, "pacman_death.mp3", FA_READ);
     if (ret_code != FR_OK) {
       SMACMAN__DEBUG_PRINTF("File Not Opened %i\n", ret_code);
       fprintf(stderr, "File Not Opened %i\n", ret_code);
