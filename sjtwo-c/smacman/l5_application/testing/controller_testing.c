@@ -10,8 +10,8 @@
 #include "sj2_cli.h"
 #include "controller_comm.h"
 
-//#define PLAYER_1
-#define MASTER
+#define PLAYER_1
+//#define MASTER
 
 static controller_comm_s controller;
 static gpio_s gpio_tx, gpio_rx;

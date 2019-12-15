@@ -25,7 +25,7 @@ extern "C" {
  ******************************************************************************/
 const static uint32_t accel_filter__intersample_delay_ms  =  10;
 const static uint32_t accel_filter__sampling_interval_ms  = 100;
-const static uint32_t accel_filter__sampling_length       = 100;
+const static uint32_t accel_filter__sampling_length       =  10;
 
 /*******************************************************************************
  *
