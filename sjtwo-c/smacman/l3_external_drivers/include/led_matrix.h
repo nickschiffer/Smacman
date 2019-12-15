@@ -7,24 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "smacman_common.h"
+
 #define matrix_height 64UL
 #define matrix_width 64UL
 #define row_bound 32UL
 #define data_size uint64_t
-
-#define SMACMAN__ENABLE_DEBUGGING 1
-
-#if SMACMAN__ENABLE_DEBUGGING
-#include <stdio.h>
-#define SMACMAN__DEBUG_PRINTF(f_, ...)                                                                                 \
-  do {                                                                                                                 \
-    fprintf(stderr, "SMACMAN:");                                                                                       \
-    fprintf(stderr, (f_), ##__VA_ARGS__);                                                                              \
-    fprintf(stderr, "\n");                                                                                             \
-  } while (0)
-#else
-#define SMACMAN__DEBUG_PRINTF(f_, ...) /* NOOP */
-#endif
 
 static const data_size ALL_INSIDE_GRID = 0x0FFFFFFFFFFFFFF0;
 static const data_size LOWER_INSIDE_GRID = 0x00000000FFFFFFF0;
@@ -80,10 +68,13 @@ void led_matrix__set_row_data(int row, led_matrix__color_e color, uint64_t data)
 void led_matrix__set_row_data_raw(int row, led_matrix__color_plane_e plane, uint64_t data);
 void led_matrix__clear_frame_buffer();
 void led_matrix__fill_frame_buffer(uint64_t data, led_matrix__color_e color);
+void led_matrix__fill_frame_buffer_inside_grid();
+void led_matrix__fill_frame_buffer_inside_grid_lower_half();
+void led_matrix__fill_frame_buffer_inside_grid_upper_half();
 void led_matrix__update_display();
 
 void led_matrix_clear_frame_buffer_inside_grid(data_size data);
 
-void led_matrix__fill_frame_buffer_inside_grid();
-void led_matrix__fill_frame_buffer_inside_grid_lower_half();
-void led_matrix__fill_frame_buffer_inside_grid_upper_half();
+// void led_matrix__fill_frame_buffer_inside_grid();
+// void led_matrix__fill_frame_buffer_inside_grid_lower_half();
+// void led_matrix__fill_frame_buffer_inside_grid_upper_half();

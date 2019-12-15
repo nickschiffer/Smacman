@@ -1,98 +1,80 @@
 #include "game_graphics.h"
 
-void increase_ball_x(ball_s *ball) {
-  ball->vx = (ball->vx == 4) ? ball->vx : (ball->vx + 1);
-  ball->vy = (ball->vy == 1) ? ball->vy : (ball->vy - 1);
-}
-
-void decrease_ball_x(ball_s *ball) {
-  ball->vx = (ball->vx == 1) ? ball->vx : (ball->vx - 1);
-  ball->vy = (ball->vy == 4) ? ball->vy : (ball->vy + 1);
-}
-
-void clear_ball(int row, int column) {
-  led_matrix__clear_pixel(row, column);
-  led_matrix__clear_pixel(row, column - 1);
-  led_matrix__clear_pixel(row, column + 1);
-  led_matrix__clear_pixel(row, column - 2);
-  led_matrix__clear_pixel(row, column + 2);
-
-  led_matrix__clear_pixel(row - 1, column);
-  led_matrix__clear_pixel(row - 1, column - 1);
-  led_matrix__clear_pixel(row - 1, column + 1);
-  led_matrix__clear_pixel(row - 1, column - 2);
-  led_matrix__clear_pixel(row - 1, column + 2);
-
-  led_matrix__clear_pixel(row + 1, column);
-  led_matrix__clear_pixel(row + 1, column - 1);
-  led_matrix__clear_pixel(row + 1, column + 1);
-  led_matrix__clear_pixel(row + 1, column - 2);
-  led_matrix__clear_pixel(row + 1, column + 2);
-
-  led_matrix__clear_pixel(row - 2, column);
-  led_matrix__clear_pixel(row - 2, column - 1);
-  led_matrix__clear_pixel(row - 2, column + 1);
-
-  led_matrix__clear_pixel(row + 2, column);
-  led_matrix__clear_pixel(row + 2, column - 1);
-  led_matrix__clear_pixel(row + 2, column + 1);
-}
-
-void ball_setup(ball_s *ball) {
-  ball->row = matrix_width / 2;
-  ball->col = matrix_height / 2;
-  ball->vx = 1;
-  ball->vy = 1;
-  ball->xDir = rand() % 2 ? 1 : -1;
-  ball->yDir = rand() % 2 ? 1 : -1;
-}
+player player1, player2;
+bool blue_collided = 0, green_collided = 0;
+bool start_detection = 0;
 
 void set_pacman_row_and_col(int row, int col, game_graphics_players which_player) {
   //   SMACMAN__DEBUG_PRINTF("Player_%i_row = %i, Player_%i_col = %i\n", which_player, row, which_player, col);
   switch (which_player) {
   case 1:
-    player_1_packman_col = col;
-    player_1_packman_row = row;
+    player1.col = col;
+    player1.row = row;
     break;
   case 2:
   default:
-    player_2_packman_col = col;
-    player_2_packman_row = row;
+    player2.col = col;
+    player2.row = row;
     break;
   }
 }
 
-volatile bool collided = 0;
+bool set_blue_collided() {
+  blue_collided = true;
+  return blue_collided;
+}
+
+bool clear_blue_collided() {
+  blue_collided = false;
+  return blue_collided;
+}
+bool get_blue_collided() { return blue_collided; }
+
+bool set_green_collided() {
+  green_collided = true;
+  return green_collided;
+}
+
+bool clear_green_collided() {
+  green_collided = false;
+  return green_collided;
+}
+bool get_green_collided() { return green_collided; }
+
+bool set_start_detection() {
+  start_detection = true;
+  return start_detection;
+}
+bool get_start_detection() { return start_detection; }
+bool clear_start_detection() {
+  start_detection = false;
+  return start_detection;
+}
+
 void detect_collision(ball_s ball) {
-  //   SMACMAN__DEBUG_PRINTF("Ball_row = %i, Ball_col = %i\n", ball.row, ball.col);
-  if ((ball.row >= player_1_packman_row && ball.row <= (player_1_packman_row + 5)) &&
-      (ball.col >= player_1_packman_col && ball.col <= (player_1_packman_col + 8))) {
-    SMACMAN__DEBUG_PRINTF("Player 1 Collision Detected\n");
-    collided = 1;
+  if ((ball.row >= (player1.row - 4) && ball.row <= (player1.row + 4)) &&
+      (ball.col >= (player1.col - 4) && ball.col <= (player1.col + 4)) && (start_detection == 1)) {
+    // if (ball.col > matrix_width / 2 + 2 && ball.xDir < 0 && ball.col < matrix_width - 5) {
+    if (ball.yDir > 0) {
+      // printf("blue hit:%i\n", ball.yDir);
+      SMACMAN__DEBUG_PRINTF("Player 1 Collision Detected\n");
+      blue_collided = set_blue_collided();
+    }
     return;
-  } else if ((ball.row >= player_2_packman_row && ball.row <= (player_2_packman_row + 5)) &&
-             (ball.col >= player_2_packman_col && ball.col <= (player_2_packman_col + 8))) {
-    SMACMAN__DEBUG_PRINTF("Player 2 Collision Detected\n");
-    collided = 1;
+  } else if ((ball.row >= (player2.row - 4) && ball.row <= (player2.row + 4)) &&
+             (ball.col >= (player2.col - 4) && ball.col <= (player2.col + 4)) && (start_detection == 1)) {
+    // if (ball.col < matrix_width / 2 - 2 && ball.xDir > 0 && ball.col > 4) {
+    if (ball.yDir < 0) {
+      // printf("green hit:%i\n", ball.yDir);
+      SMACMAN__DEBUG_PRINTF("Player 2 Collision Detected\n");
+      green_collided = set_green_collided();
+    }
     return;
   }
+
   led_matrix__drawBall(ball.row, ball.col, RED);
 }
 
-void blue_pacman_setup(pacman_s *blue_pacman) {
-  blue_pacman->row_upordown_right = 5;
-  blue_pacman->row_upordown_left = matrix_width - 6;
-  blue_pacman->row_left_upordown = 2;
-  blue_pacman->row_right_upordown = matrix_width - 3;
-  blue_pacman->col_up_leftorright = (matrix_height / 2);
-  blue_pacman->col_down_leftorright = matrix_height - 5;
-  blue_pacman->col_leftorrigt_up = matrix_height - 8;
-  blue_pacman->col_leftorrigt_down = (matrix_height / 2) + 3;
-  blue_pacman->packman_color = BLUE;
-  blue_pacman->direction = LEFT_UP;
-}
-
-void green_pacman_setup(void) {}
 void game_graphics_packman(int row, int column, led_matrix__direction_e direction, led_matrix__color_e packman_color,
                            game_graphics_players which_player) {
 
