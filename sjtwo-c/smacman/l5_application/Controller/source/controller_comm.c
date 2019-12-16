@@ -107,7 +107,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
             printf("failed stop byte, got %X\n", (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_STOP_BYTE]);
             for (int i = 0; i < sizeof(message_components); i++) {
                 printf("message components[%d] = %u\n", i, (uint8_t)message_components[i]);
-            }   
+            } 
             return message;
         }
     }
@@ -116,6 +116,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
 #endif
     message.recipient = (controller_comm__role_e) (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_RECIPIENT];
     message.sender    = (controller_comm__role_e) (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_SENDER];
+    message.message_type = (controller_comm__message_type_e) (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_TYPE];
     message.data      = ((uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE2] << 8 
                       |  (uint8_t)message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE1]) & 0xFFFF;
 #ifdef CONTROLLER_COMM__CHECKSUM
@@ -179,7 +180,7 @@ static bool controller_comm__handle_received_message(controller_comm_s controlle
             }
             if ((controller.role == CONTROLLER_COMM__ROLE_PLAYER_1 && controller_comm__button_1_is_pressed) ||
                 (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2 && controller_comm__button_2_is_pressed)) {
-                message.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED;
+                message_reply.message_type = CONTROLLER_COMM__MESSAGE_TYPE_SEND_ACCEL_VAL_BTN_PRESSED;
                 controller_comm__button_1_is_pressed = false;
                 controller_comm__button_2_is_pressed = false;
             }
@@ -189,7 +190,7 @@ static bool controller_comm__handle_received_message(controller_comm_s controlle
             #ifdef CONTROLLER_COMM__USING_ACCEL_FILTER
                 message_reply.data         = accel_filter__get_position(); // TODO: which axis do we want?
             #else
-                message_reply.data         = acceleration__get_data().x; // TODO: which axis do we want?
+                message_reply.data         = acceleration__get_data().y; // TODO: which axis do we want?
             #endif
             return controller_comm__send_message(controller, message_reply);
 
@@ -288,6 +289,7 @@ controller_comm_s controller_comm__init(controller_comm__role_e role, uart_e uar
     if (role != CONTROLLER_COMM__ROLE_MASTER) {
         // set up Button
         controller_comm__button_queue = xQueueCreate(1, sizeof(char));
+        gpiolab__enable_gpio();
         gpiolab__set_as_input(controller_comm__button_gpio_port, controller_comm__button_gpio_pin);
         gpiolab__attach_interrupt(controller_comm__button_gpio_port, controller_comm__button_gpio_pin, GPIO_INTR__RISING_EDGE, button_isr);
         gpiolab__enable_interrupts();
@@ -325,7 +327,16 @@ void controller_comm__freertos_task(void *controller_comm_struct){
                 controller_comm__master_update_controller_states(reply);
                 #ifdef CONTROLLER_COMM__DEBUG
                     puts("Master (me) Requested Accel Value from Player 1\n");
-                    printf("value received: %u\n", reply.data);
+                    switch (controller_comm__get_player_1_tilt()) {
+                        case CONTROLLER_COMM__CONTROLLER_TILT_CENTER: printf("player 1 tilt center.\n");
+                            break;
+                        case CONTROLLER_COMM__CONTROLLER_TILT_LEFT: printf("player 1 tilt left.\n");
+                            break;
+                        case CONTROLLER_COMM__CONTROLLER_TILT_RIGHT: printf("player 1 tilt right.\n");
+                            break;
+                        default: printf("player 1 tilt invalid");
+                            break;
+                    }
                     printf("button pressed? %s\n\n", controller_com__get_player_1_button() ? "yes" : "no");
                     //printf("success rate: %lu / %lu\n", message_success_count, message_count);
                 #endif
@@ -389,5 +400,45 @@ bool controller_com__get_player_2_button() {
     else {
         return false;
     }
+}
+controller_comm__controller_tilt_e controller_comm__get_player_1_tilt() {
+    if (controller_comm__player_1_accel >= controller_comm__controller_tilt_middle_left || 
+        controller_comm__player_1_accel <= controller_comm__controller_tilt_middle_right) {
+            printf("Center with value of %u\n", controller_comm__player_1_accel);
+            return CONTROLLER_COMM__CONTROLLER_TILT_CENTER;
+    }
+    else if (controller_comm__player_1_accel > controller_comm__controller_tilt_left_low && 
+             controller_comm__player_1_accel < controller_comm__controller_tilt_middle_left) {
+                 printf("Left with value of %u\n", controller_comm__player_1_accel);
+        return CONTROLLER_COMM__CONTROLLER_TILT_LEFT;
+    }
+    else if (controller_comm__player_1_accel > controller_comm__controller_tilt_middle_right && 
+             controller_comm__player_1_accel < controller_comm__controller_tilt_right_high) {
+                 printf("Right with value of %u\n", controller_comm__player_1_accel);
+        return CONTROLLER_COMM__CONTROLLER_TILT_RIGHT;
+    }
+    else {
+        return CONTROLLER_COMM__CONTROLLER_TILT_INVALID;
+    }
+
+}
+
+controller_comm__controller_tilt_e controller_comm__get_player_2_tilt() {
+    if (controller_comm__player_2_accel >= controller_comm__controller_tilt_middle_left || 
+        controller_comm__player_2_accel <= controller_comm__controller_tilt_middle_right) {
+            return CONTROLLER_COMM__CONTROLLER_TILT_CENTER;
+    }
+    else if (controller_comm__player_2_accel > controller_comm__controller_tilt_left_low && 
+             controller_comm__player_2_accel < controller_comm__controller_tilt_middle_left) {
+        return CONTROLLER_COMM__CONTROLLER_TILT_LEFT;
+    }
+    else if (controller_comm__player_2_accel > controller_comm__controller_tilt_middle_right && 
+             controller_comm__player_2_accel < controller_comm__controller_tilt_right_high) {
+        return CONTROLLER_COMM__CONTROLLER_TILT_RIGHT;
+    }
+    else {
+        return CONTROLLER_COMM__CONTROLLER_TILT_INVALID;
+    }
+
 }
 // clang-format on

@@ -21,7 +21,7 @@ void accel_filter__freertos_task(void *pvParams) {
   while (1) {
     uint32_t sample_sum = 0;
     for (int i = 0; i < accel_filter__sampling_length; ++i) {
-      sample_sum += acceleration__get_data().x;
+      sample_sum += acceleration__get_data().y;
       vTaskDelay(pdMS_TO_TICKS(accel_filter__intersample_delay_ms));
     }
     position = (sample_sum / accel_filter__sampling_length) & 0xFFFF;

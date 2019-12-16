@@ -15,14 +15,19 @@ void paddle_task(void *task_param) {
   while (true) {
     if (pad_setup.paddle_color == BLUE) {
 #if SMACMAN_CONTROLLER_CONNECTED
-      uint16_t dir = controller_comm__get_player_1_accel();
-      if (dir == 0) {
+      // uint16_t dir = controller_comm__get_player_1_accel();
+      controller_comm__controller_tilt_e dir = controller_comm__get_player_1_tilt();
+      if (dir == CONTROLLER_COMM__CONTROLLER_TILT_CENTER) {
         left = 0;
         right = 0;
-      } else if (dir < 2000) {
+      } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_LEFT) {
         left = 1;
-      } else {
+      } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_RIGHT) {
         right = 1;
+      } else {
+        left = 0;
+        right = 0;
+        SMACMAN__DEBUG_PRINTF("Invalid Tilt\n");
       }
 #else
       left = gpio__get(switch0);
@@ -38,14 +43,19 @@ void paddle_task(void *task_param) {
 
     } else {
 #if SMACMAN_CONTROLLER_CONNECTED
-      uint16_t dir = controller_comm__get_player_2_accel();
-      if (dir == 0) {
+      // uint16_t dir = controller_comm__get_player_2_accel();
+      controller_comm__controller_tilt_e dir = controller_comm__get_player_1_tilt();
+      if (dir == CONTROLLER_COMM__CONTROLLER_TILT_CENTER) {
         left = 0;
         right = 0;
-      } else if (dir < 2000) {
+      } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_LEFT) {
         left = 1;
-      } else {
+      } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_RIGHT) {
         right = 1;
+      } else {
+        left = 0;
+        right = 0;
+        SMACMAN__DEBUG_PRINTF("Invalid Tilt\n");
       }
 #else
       left = gpio__get(switch2);
