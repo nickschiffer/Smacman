@@ -295,6 +295,8 @@ void led_matrix__display_intro_Pacs(void) {
   led_matrix__clear_pixel(row2 + 14, col + 7);
   led_matrix__clear_pixel(row2 + 15, col - 8);
   led_matrix__clear_pixel(row2 + 15, col + 8);
+
+  // led_matrix__display_intro_Ball();
   // led_matrix__clear_pixel(row - 14, col - 6);
   // led_matrix__clear_pixel(row - 14, col + 6);
   // led_matrix__set_pixel(row + 4, col + 2, ball_color);

@@ -139,6 +139,8 @@ static void master_task(void *params) {
       // game_current_state = IN_PROGRESS_STATE;
       break;
     case IN_PROGRESS_STATE:
+      // SMACMAN__DEBUG_PRINTF("")
+      fprintf(stderr, "In progress state\n");
       vTaskSuspend(xHandle[players_score]);
       vTaskResume(xHandle[blue_pacman]);
       vTaskResume(xHandle[green_pacman]);
@@ -147,6 +149,18 @@ static void master_task(void *params) {
       vTaskResume(xHandle[ball]);
       break;
     case IN_PAUSE_STATE:
+      fprintf(stderr, "In Pause state\n");
+      vTaskSuspend(xHandle[blue_pacman]);
+      vTaskSuspend(xHandle[green_pacman]);
+      vTaskSuspend(xHandle[paddle_blue]);
+      vTaskSuspend(xHandle[paddle_green]);
+      vTaskSuspend(xHandle[ball]);
+      led_matrix_clear_frame_buffer_inside_grid(0x0FFFFFFFFFFFFFF0);
+      vTaskResume(xHandle[players_score]);
+      // vTaskDelay(3000);
+      set_game_state(IN_PAUSE_STATE);
+      led_matrix_clear_frame_buffer_inside_grid(0x0FFFFFFFFFFFFFF0);
+      break;
     case IN_SCORE_STATE:
       vTaskSuspend(xHandle[blue_pacman]);
       vTaskSuspend(xHandle[green_pacman]);
@@ -158,6 +172,8 @@ static void master_task(void *params) {
       vTaskDelay(3000);
       set_game_state(IN_PROGRESS_STATE);
       led_matrix_clear_frame_buffer_inside_grid(0x0FFFFFFFFFFFFFF0);
+      temp_game_current_state_send = IN_PROGRESS_STATE;
+      xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
       break;
     //
     default:

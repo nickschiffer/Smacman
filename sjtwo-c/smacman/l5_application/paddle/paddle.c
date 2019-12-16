@@ -44,7 +44,7 @@ void paddle_task(void *task_param) {
     } else {
 #if SMACMAN_CONTROLLER_CONNECTED
       // uint16_t dir = controller_comm__get_player_2_accel();
-      controller_comm__controller_tilt_e dir = controller_comm__get_player_1_tilt();
+      controller_comm__controller_tilt_e dir = controller_comm__get_player_2_tilt();
       if (dir == CONTROLLER_COMM__CONTROLLER_TILT_CENTER) {
         left = 0;
         right = 0;

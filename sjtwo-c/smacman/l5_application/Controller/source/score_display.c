@@ -52,6 +52,7 @@ bool score_display__write_score(uint16_t score) {
     
     if(!i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_DIGIT0, score_display__number_table[digits[0]])) return false;
     if(!i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_DIGIT1, score_display__number_table[digits[1]])) return false;
+    if(!i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_SEMICOLON, 0xFF)) return false;
     if(!i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_DIGIT2, score_display__number_table[digits[2]])) return false;
     if(!i2c__write_single(SCORE_DISPLAY__I2C_DEVICE, SCORE_DISPLAY__I2C_ADDRESS, HT16K33_DIGIT3, score_display__number_table[digits[3]])) return false;
     return true;

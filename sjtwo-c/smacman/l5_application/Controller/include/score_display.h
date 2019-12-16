@@ -38,10 +38,11 @@ static const uint8_t HT16K33_MAX_BRIGHTNESS  =   15;
 static const uint8_t HT16K33_MIN_BRIGHTNESS  =    0;
 
 // digits are right to left
-static const uint8_t HT16K33_DIGIT0 = 0x00;
-static const uint8_t HT16K33_DIGIT1 = 0x02;
-static const uint8_t HT16K33_DIGIT2 = 0x06;
-static const uint8_t HT16K33_DIGIT3 = 0x08; 
+static const uint8_t HT16K33_DIGIT0    = 0x00;
+static const uint8_t HT16K33_DIGIT1    = 0x02;
+static const uint8_t HT16K33_SEMICOLON = 0x04;
+static const uint8_t HT16K33_DIGIT2    = 0x06;
+static const uint8_t HT16K33_DIGIT3    = 0x08; 
 /*******************************************************************************
  *
  *                                 E N U M S

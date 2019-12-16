@@ -40,7 +40,7 @@ extern "C" {
 const static uint32_t controller_comm__uart_baud_rate                  = 38400;
 const static uint8_t  controller_comm__rx_queue_size                   = 20;
 const static uint8_t  controller_comm__tx_queue_size                   = 20;
-const static uint32_t controller_comm__message_receive_byte_timeout_ms = 100;
+const static uint32_t controller_comm__message_receive_byte_timeout_ms = 15;
 const static uint32_t controller_comm__message_receive_timeout_ms      = 10;
 const static uint8_t  controller_comm__message_start_byte              = 0xDE;
 const static uint8_t  controller_comm__message_stop_byte               = 0xAD;

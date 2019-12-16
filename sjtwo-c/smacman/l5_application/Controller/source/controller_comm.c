@@ -51,7 +51,7 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
             uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_START_BYTE], controller_comm__message_receive_timeout_ms);
             if (retry_count++ >= controller_comm__master_rx_retry_threshold) {
                 memset(&message, 0, sizeof(controller_comm__message_s));
-                puts("Master Timed out on RX");
+                //puts("Master Timed out on RX");
                 return message;
             }
         }
@@ -315,16 +315,28 @@ void controller_comm__freertos_task(void *controller_comm_struct){
             uint32_t message_count = 0;
             uint32_t message_success_count = 0;
             while(1) {
-                controller_comm__message_s reply = {0};
+                // controller_comm__message_s reply_p1 = {0};
+                // controller_comm__message_s reply_p2 = {0};
                 do {
                     // printf("master sending request\n");
+                    controller_comm__message_s reply_p1 = {0};
+                    controller_comm__message_s reply_p2 = {0};
                     controller_comm__master_request_accel(controller, CONTROLLER_COMM__ROLE_PLAYER_1);
-                    vTaskDelay(pdMS_TO_TICKS(100));
-                    reply = controller_comm__wait_on_next_message(controller);
+                    vTaskDelay(pdMS_TO_TICKS(25));
+                    reply_p1 = controller_comm__wait_on_next_message(controller);
+                    if (reply_p1.recipient + reply_p1.sender != 0) {
+                        controller_comm__master_update_controller_states(reply_p1);
+                    }
+                    controller_comm__master_request_accel(controller, CONTROLLER_COMM__ROLE_PLAYER_2);
+                    vTaskDelay(pdMS_TO_TICKS(25));
+                    reply_p2 = controller_comm__wait_on_next_message(controller);
+                    if (reply_p2.recipient + reply_p2.sender != 0) {
+                        controller_comm__master_update_controller_states(reply_p2);
+                    }
                     message_count++;
-                } while (reply.recipient + reply.sender == 0);
-                message_success_count++;
-                controller_comm__master_update_controller_states(reply);
+                } while (1);
+                // message_success_count++;
+                // controller_comm__master_update_controller_states(reply);
                 #ifdef CONTROLLER_COMM__DEBUG
                     puts("Master (me) Requested Accel Value from Player 1\n");
                     switch (controller_comm__get_player_1_tilt()) {
@@ -337,7 +349,7 @@ void controller_comm__freertos_task(void *controller_comm_struct){
                         default: printf("player 1 tilt invalid");
                             break;
                     }
-                    printf("button pressed? %s\n\n", controller_com__get_player_1_button() ? "yes" : "no");
+                    //printf("button pressed? %s\n\n", controller_com__get_player_1_button() ? "yes" : "no");
                     //printf("success rate: %lu / %lu\n", message_success_count, message_count);
                 #endif
                 vTaskDelay(pdMS_TO_TICKS(10));
@@ -404,17 +416,17 @@ bool controller_com__get_player_2_button() {
 controller_comm__controller_tilt_e controller_comm__get_player_1_tilt() {
     if (controller_comm__player_1_accel >= controller_comm__controller_tilt_middle_left || 
         controller_comm__player_1_accel <= controller_comm__controller_tilt_middle_right) {
-            printf("Center with value of %u\n", controller_comm__player_1_accel);
+            // printf("Center with value of %u\n", controller_comm__player_1_accel);
             return CONTROLLER_COMM__CONTROLLER_TILT_CENTER;
     }
     else if (controller_comm__player_1_accel > controller_comm__controller_tilt_left_low && 
              controller_comm__player_1_accel < controller_comm__controller_tilt_middle_left) {
-                 printf("Left with value of %u\n", controller_comm__player_1_accel);
+                //  printf("Left with value of %u\n", controller_comm__player_1_accel);
         return CONTROLLER_COMM__CONTROLLER_TILT_LEFT;
     }
     else if (controller_comm__player_1_accel > controller_comm__controller_tilt_middle_right && 
              controller_comm__player_1_accel < controller_comm__controller_tilt_right_high) {
-                 printf("Right with value of %u\n", controller_comm__player_1_accel);
+                //  printf("Right with value of %u\n", controller_comm__player_1_accel);
         return CONTROLLER_COMM__CONTROLLER_TILT_RIGHT;
     }
     else {
