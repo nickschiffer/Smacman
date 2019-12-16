@@ -48,7 +48,7 @@ ball_s get_ball_position_direction() { return ball_pos_direction; }
 void set_players_score(uint8_t score_green, uint8_t score_blue) {
   green_player_score = score_green;
   blue_player_score = score_blue;
-  transfer_score = score_blue * 100 + score_green;
+  transfer_score = (score_blue * 100) + score_green;
   controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_2, transfer_score);
   controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_1, transfer_score);
 }

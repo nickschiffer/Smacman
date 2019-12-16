@@ -461,11 +461,21 @@ void pacman_task_level3(void *task_param) {
         //   pacman.col_leftorrigt_down = pacman.col_leftorrigt_up;
       }
       if (pacman.col_leftorrigt_up > ball_pos.col) {
-        // pacman.direction = RIGHT_UP;
-        pacman.col_leftorrigt_up--;
+        // pacman.direction = RIGHT_UP; (matrix_height / 2) - 1
+        if (pacman.packman_color == BLUE && pacman.col_leftorrigt_up > (matrix_width / 2) + 3) {
+          pacman.col_leftorrigt_up--;
+        } else if (pacman.packman_color == GREEN && pacman.col_leftorrigt_up > 2) {
+          pacman.col_leftorrigt_up--;
+        } else
+          pacman.col_leftorrigt_up;
         //   pacman.col_leftorrigt_down = pacman.col_leftorrigt_up;
       } else {
-        pacman.col_leftorrigt_up++;
+        if (pacman.packman_color == BLUE && pacman.col_leftorrigt_up > (matrix_width - 2)) {
+          pacman.col_leftorrigt_up++;
+        } else if (pacman.packman_color == GREEN && pacman.col_leftorrigt_up < (matrix_width / 2) - 3) {
+          pacman.col_leftorrigt_up++;
+        } else
+          pacman.col_leftorrigt_up;
       }
       switch (pacman.row_left_upordown) {
       case 2 ... matrix_width - 8:
@@ -503,11 +513,21 @@ void pacman_task_level3(void *task_param) {
         //   pacman.col_leftorrigt_up = pacman.col_leftorrigt_down;
       }
       if (pacman.col_leftorrigt_up > ball_pos.col) {
-        // pacman.direction = RIGHT_UP;
-        pacman.col_leftorrigt_up--;
+        // pacman.direction = RIGHT_UP; (matrix_height / 2) - 1
+        if (pacman.packman_color == BLUE && pacman.col_leftorrigt_up > (matrix_width / 2) + 3) {
+          pacman.col_leftorrigt_up--;
+        } else if (pacman.packman_color == GREEN && pacman.col_leftorrigt_up > 2) {
+          pacman.col_leftorrigt_up--;
+        } else
+          pacman.col_leftorrigt_up;
         //   pacman.col_leftorrigt_down = pacman.col_leftorrigt_up;
       } else {
-        pacman.col_leftorrigt_up++;
+        if (pacman.packman_color == BLUE && pacman.col_leftorrigt_up > (matrix_width - 2)) {
+          pacman.col_leftorrigt_up++;
+        } else if (pacman.packman_color == GREEN && pacman.col_leftorrigt_up < (matrix_width / 2) - 3) {
+          pacman.col_leftorrigt_up++;
+        } else
+          pacman.col_leftorrigt_up;
       }
       switch (pacman.row_right_upordown) {
       case 7 ... matrix_width - 3:
