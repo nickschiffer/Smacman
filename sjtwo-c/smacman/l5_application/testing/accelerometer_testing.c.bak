@@ -1,0 +1,60 @@
+#include <stdio.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "acceleration.h"
+#include "math.h"
+
+#include "sj2_cli.h"
+
+
+void acceleration_test(void *pvParams) {
+    acceleration__axis_data_s data = {0};
+    while(true) {
+        data = acceleration__get_data();
+        printf("acceleration x: %u, y: %u, z: %u\n", data.x, data.y, data.z);
+        if (data.y >= 3800 || data.y <= 300) {
+            puts("middle");
+        }
+        if (data.y > 3000 && data.y < 3800) {
+            puts("left");
+        }
+        if (data.y > 300 && data.y < 1000) {
+            puts("right");
+        }
+
+        // double x = (double)data.x / (double)UINT16_MAX;
+        // double y = (double)data.y / (double)UINT16_MAX;
+        // double z = (double)data.z / (double)UINT16_MAX;
+        // double roll = atan2(y , z) * 57.3;
+        // double pitch = atan2((- x) , sqrt(y * y + z * z)) * 57.3;
+        // printf("roll %lf\n", roll);
+        // printf("pitch %lf\n\n", pitch);
+
+        //printf("accel  x: %lf, y: %lf, z: %lf\n", x * 100, y * 100, z * 100);
+        //printf("signed x: %d, y: %d, z: %d\n", (int)data.x, (int)data.y, (int)data.z);
+        //printf("sin^-1 x: %f, y: %f, z: %f\n", asin(x) * 100, asin(y) * 100, asin(z) * 100);
+        vTaskDelay(500);
+    }
+}
+
+
+int main(void) {
+acceleration__init();
+
+xTaskCreate(acceleration_test, "acceleration_test", (3000U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);  
+
+  // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
+  // Change '#if 0' to '#if 1' and vice versa to try it out
+#if 0
+  // printf() takes more stack space, size this tasks' stack higher
+  xTaskCreate(uart_task, "uart", (512U * 8) / sizeof(void *), NULL, PRIORITY_LOW, NULL);
+#else
+  sj2_cli__init();
+#endif
+
+  puts("Starting RTOS");
+  vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
+
+  return 0;
+}

@@ -1,0 +1,37 @@
+#include <stdio.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include "score_display.h"
+#include "sj2_cli.h"
+
+void score_display_test(void *pvParams) {
+    score_display__init();
+    while(true) {
+        for (int i = 0; i < 10000; ++i) {
+            score_display__write_score((uint16_t)i);
+            vTaskDelay(pdMS_TO_TICKS(1));
+        }
+    }
+}
+
+int main(void) {
+
+
+xTaskCreate(score_display_test, "score_display", (5000U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);  
+
+  // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
+  // Change '#if 0' to '#if 1' and vice versa to try it out
+#if 0
+  // printf() takes more stack space, size this tasks' stack higher
+  xTaskCreate(uart_task, "uart", (512U * 8) / sizeof(void *), NULL, PRIORITY_LOW, NULL);
+#else
+  sj2_cli__init();
+#endif
+
+  puts("Starting RTOS");
+  vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
+
+  return 0;
+}

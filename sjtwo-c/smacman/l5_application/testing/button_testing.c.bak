@@ -1,0 +1,64 @@
+#include <stdio.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "gpio_lab.h"
+#include "gpio.h"
+
+#include "score_display.h"
+#include "sj2_cli.h"
+
+const static gpio__port_e controller_comm__button_gpio_port            = GPIO_0;
+const static uint32_t controller_comm__button_gpio_pin                 = 1;
+const static TickType_t controller_comm__button_press_filter_time_ms   = 500;
+
+static QueueHandle_t controller_comm__button_queue           = NULL;
+static TickType_t    controller_comm__last_button_press_time = 0;
+
+void button_test(void *pvParams) {
+    char c = 'p';
+    while(true) {
+        if (xQueueReceive(controller_comm__button_queue, &c, portMAX_DELAY)) {
+            puts("got rising edge");
+        }
+    }
+}
+
+void button_isr_test() {
+    TickType_t current_time_ms =  xTaskGetTickCountFromISR();
+    fprintf(stderr, "hit isr\n");
+    if (current_time_ms < controller_comm__last_button_press_time + controller_comm__button_press_filter_time_ms) {
+        return;
+    }
+    else {
+        controller_comm__last_button_press_time = current_time_ms;
+        char c = 'p';
+        xQueueSendFromISR(controller_comm__button_queue, &c, NULL);
+        return;
+    }
+}
+
+int main(void) {
+controller_comm__button_queue = xQueueCreate(1, sizeof(char));
+gpiolab__enable_gpio();
+gpiolab__set_as_input(controller_comm__button_gpio_port, controller_comm__button_gpio_pin);
+gpiolab__attach_interrupt(controller_comm__button_gpio_port, controller_comm__button_gpio_pin, GPIO_INTR__RISING_EDGE, button_isr_test);
+gpiolab__enable_interrupts();
+
+xTaskCreate(button_test, "button_test", (5000U / sizeof(void *)), NULL, PRIORITY_LOW, NULL);  
+
+  // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
+  // Change '#if 0' to '#if 1' and vice versa to try it out
+#if 0
+  // printf() takes more stack space, size this tasks' stack higher
+  xTaskCreate(uart_task, "uart", (512U * 8) / sizeof(void *), NULL, PRIORITY_LOW, NULL);
+#else
+  sj2_cli__init();
+#endif
+
+  puts("Starting RTOS");
+  vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
+
+  return 0;
+}
