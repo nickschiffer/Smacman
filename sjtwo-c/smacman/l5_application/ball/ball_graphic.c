@@ -5,6 +5,7 @@ ball_s ball_pos_direction;
 bool ball_in_green_half;
 bool ball_in_blue_half;
 uint8_t blue_player_score = 0, green_player_score = 0;
+uint8_t transfer_score = 0;
 
 void increase_ball_x(ball_s *ball) {
   ball->vx = (ball->vx == 4) ? ball->vx : (ball->vx + 1);
@@ -46,9 +47,10 @@ ball_s get_ball_position_direction() { return ball_pos_direction; }
 
 void set_players_score(uint8_t score_green, uint8_t score_blue) {
   green_player_score = score_green;
-  controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_2, score_green);
   blue_player_score = score_blue;
-  controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_1, score_blue);
+  transfer_score = score_blue * 100 + score_green;
+  controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_2, transfer_score);
+  controller_comm__update_player_score(CONTROLLER_COMM__ROLE_PLAYER_1, transfer_score);
 }
 
 uint8_t get_blue_player_score(void) { return blue_player_score; }

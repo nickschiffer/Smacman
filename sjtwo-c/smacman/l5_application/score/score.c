@@ -13,11 +13,11 @@ void score_task(void *task_param) {
     green_digit2 = (score_green - green_digit1) / 10;
     blue_digit1 = score_blue % 10;
     blue_digit2 = (score_blue - blue_digit1) / 10;
-    led_matrix_clear_frame_buffer_inside_grid(0x0FFFFFFFFFFFFFF0);
-    display_digit(green_digit1, 45, 47, GREEN);
-    display_digit(green_digit2, 59, 47, GREEN);
-    display_digit(blue_digit1, 15, 47, BLUE);
-    display_digit(blue_digit2, 29, 47, BLUE);
+    led_matrix_clear_frame_buffer_inside_grid(0x3FFFFFFFFFFFFFFC);
+    display_digit(green_digit1, 48, 19, GREEN);
+    display_digit(green_digit2, 34, 19, GREEN);
+    display_digit(blue_digit1, 18, 19, BLUE);
+    display_digit(blue_digit2, 4, 19, BLUE);
     vTaskDelay(25);
   }
   // led_matrix__fill_frame_buffer_inside_grid();
