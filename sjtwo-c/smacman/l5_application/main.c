@@ -113,7 +113,8 @@ static BaseType_t create_task_game(void *function_name, char *task_name, uint32_
 }
 
 void check_score(pacman_level_e *which_pacman_level, TaskHandle_t *xPacmanHandle) {
-  int score_now = max_get_max_score();
+  uint16_t score_now = max_get_max_score();
+  SMACMAN__DEBUG_PRINTF("Score_now = %i", score_now);
   game_logic_game_state_s temp_game_current_state_send;
   if ((score_now > 0) && (score_now <= 33) && (*which_pacman_level == PACMAN_LEVEL_3)) {
     vTaskSuspend(pacman_tasks.blue_pac);
@@ -162,6 +163,7 @@ static void master_task(void *params) {
   pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l1];
   pacman_tasks.green_pac = xPacmanHandle[green_pacman_l1];
   while (1) {
+    check_score(&which_pacman_level, xPacmanHandle);
 
     xQueueReceive(*(ball_level_queue.state_queue), &game_current_state, portMAX_DELAY);
     // fprintf(stderr, "Game Current State = %d\n", game_current_state);
@@ -202,7 +204,6 @@ static void master_task(void *params) {
     case IN_PROGRESS_STATE:
       // SMACMAN__DEBUG_PRINTF("")
       fprintf(stderr, "In progress state\n");
-      check_score(&which_pacman_level, xPacmanHandle);
       vTaskSuspend(xHandle[players_score]);
       vTaskResume(pacman_tasks.blue_pac);
       vTaskResume(pacman_tasks.green_pac);
