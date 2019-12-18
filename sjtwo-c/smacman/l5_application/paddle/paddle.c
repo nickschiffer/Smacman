@@ -49,9 +49,9 @@ void paddle_task(void *task_param) {
         left = 0;
         right = 0;
       } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_LEFT) {
-        left = 1;
-      } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_RIGHT) {
         right = 1;
+      } else if (dir == CONTROLLER_COMM__CONTROLLER_TILT_RIGHT) {
+        left = 1;
       } else {
         left = 0;
         right = 0;

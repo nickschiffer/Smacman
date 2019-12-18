@@ -116,7 +116,7 @@ void check_score(pacman_level_e *which_pacman_level, TaskHandle_t *xPacmanHandle
   uint16_t score_now = max_get_max_score();
   SMACMAN__DEBUG_PRINTF("Score_now = %i", score_now);
   game_logic_game_state_s temp_game_current_state_send;
-  if ((score_now > 0) && (score_now <= 33) && (*which_pacman_level == PACMAN_LEVEL_3)) {
+  if ((score_now > 0) && (score_now <= 5) && (*which_pacman_level == PACMAN_LEVEL_3)) {
     vTaskSuspend(pacman_tasks.blue_pac);
     vTaskSuspend(pacman_tasks.green_pac);
     pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l1];
@@ -126,7 +126,7 @@ void check_score(pacman_level_e *which_pacman_level, TaskHandle_t *xPacmanHandle
     temp_game_current_state_send = IN_PROGRESS_STATE;
     xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
 
-  } else if ((score_now > 33) && (score_now < 66) && (*which_pacman_level == PACMAN_LEVEL_1)) {
+  } else if ((score_now > 5) && (score_now <= 10) && (*which_pacman_level == PACMAN_LEVEL_1)) {
     vTaskSuspend(pacman_tasks.blue_pac);
     vTaskSuspend(pacman_tasks.green_pac);
     pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l2];
@@ -135,11 +135,11 @@ void check_score(pacman_level_e *which_pacman_level, TaskHandle_t *xPacmanHandle
     *which_pacman_level = PACMAN_LEVEL_2;
     temp_game_current_state_send = IN_PROGRESS_STATE;
     xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
-  } else if ((score_now > 33) && (score_now < 66) && (*which_pacman_level == PACMAN_LEVEL_2)) {
+  } else if ((score_now > 1) && (*which_pacman_level == PACMAN_LEVEL_2)) {
     vTaskSuspend(pacman_tasks.blue_pac);
     vTaskSuspend(pacman_tasks.green_pac);
-    pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l2];
-    pacman_tasks.green_pac = xPacmanHandle[green_pacman_l2];
+    pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l3];
+    pacman_tasks.green_pac = xPacmanHandle[green_pacman_l3];
     ball_level_queue.level = 3;
     *which_pacman_level = PACMAN_LEVEL_3;
     temp_game_current_state_send = IN_PROGRESS_STATE;

@@ -125,11 +125,11 @@ void ball_task(void *params) {
       }
     }
 
-    if ((ball.col == matrix_width / 2 - 2) || (ball.col == matrix_width / 2 + 2) && (ball_parameters.level != 3)) {
-      // printf("Setting ball position\n");
-      set_ball_position_direction(&ball);
-    }
-    if ((ball_parameters.level == 3)) {
+    // if ((ball.col == matrix_width / 2 - 2) || (ball.col == matrix_width / 2 + 2) && (ball_parameters.level != 3)) {
+    //   // printf("Setting ball position\n");
+    //   set_ball_position_direction(&ball);
+    // }
+    if (ball.col > 0) {
       set_ball_position_direction(&ball);
     }
 
