@@ -10,8 +10,8 @@
  ******************************************************************************/
 static uint16_t      controller_comm__player_1_accel         = 0;
 static uint16_t      controller_comm__player_2_accel         = 0;
-static uint8_t       controller_comm__player_1_score         = 0;
-static uint8_t       controller_comm__player_2_score         = 0;
+static uint16_t      controller_comm__player_1_score         = 0;
+static uint16_t      controller_comm__player_2_score         = 0;
 static bool          controller_comm__button_1_is_pressed    = false;
 static bool          controller_comm__button_2_is_pressed    = false;
 static QueueHandle_t controller_comm__button_queue           = NULL;
@@ -68,6 +68,11 @@ static controller_comm__message_s controller_comm__wait_on_next_message(controll
 
     if (message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_TYPE] == CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL) {
         if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE1], controller_comm__message_receive_byte_timeout_ms)){ 
+            memset(&message, 0, sizeof(controller_comm__message_s));
+            printf("timeout on receive: data_byte_1\n");
+            return message;
+        }
+        if (!uart__get(controller.uart, &message_components[CONTROLLER_COMM__MESSAGE_COMPONENT_DATA_BYTE2], controller_comm__message_receive_byte_timeout_ms)){ 
             memset(&message, 0, sizeof(controller_comm__message_s));
             printf("timeout on receive: data_byte_1\n");
             return message;
@@ -138,6 +143,7 @@ static bool controller_comm__send_message(controller_comm_s controller, controll
 
     if (message.message_type == CONTROLLER_COMM__MESSAGE_TYPE_REQUEST_ACCEL_VAL) {
         (void)uart__put(controller.uart, (char)message_data_byte1, UINT32_MAX);
+        (void)uart__put(controller.uart, (char)message_data_byte2, UINT32_MAX);
         (void)uart__put(controller.uart, (char)controller_comm__message_stop_byte, UINT32_MAX);
         return true;
     }
@@ -155,7 +161,7 @@ static bool controller_comm__handle_received_message(controller_comm_s controlle
             #ifdef CONTROLLER_COMM__DEBUG
                 puts("Received Request for Accel Value");fflush(stdout);
             #endif
-            uint8_t new_player_score = (uint8_t)message.data;
+            uint16_t new_player_score = (uint16_t)message.data;
             if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_1
                 && controller_comm__player_1_score != new_player_score) {
                 controller_comm__player_1_score = new_player_score;
@@ -163,7 +169,7 @@ static bool controller_comm__handle_received_message(controller_comm_s controlle
             }
             else if (controller.role == CONTROLLER_COMM__ROLE_PLAYER_2
                     && controller_comm__player_2_score != new_player_score) {
-                controller_comm__player_2_score = (uint8_t)message.data;
+                controller_comm__player_2_score = new_player_score;
                 if(!score_display__write_score((uint16_t)new_player_score)) return false;
             }
             controller_comm__message_s message_reply = {0};
@@ -381,7 +387,7 @@ uint16_t controller_comm__get_player_2_accel() {
     return controller_comm__player_2_accel;
 }
 
-bool controller_comm__update_player_score(controller_comm__role_e player, uint8_t score) {
+bool controller_comm__update_player_score(controller_comm__role_e player, uint16_t score) {
     if (player == CONTROLLER_COMM__ROLE_PLAYER_1) {
         controller_comm__player_1_score = score;
         return true;

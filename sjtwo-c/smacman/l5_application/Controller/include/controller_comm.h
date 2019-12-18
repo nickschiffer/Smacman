@@ -13,9 +13,9 @@
 extern "C" {
 #endif
 
-#define CONTROLLER_COMM__USING_ACCEL_FILTER
+//#define CONTROLLER_COMM__USING_ACCEL_FILTER
 // #define CONTROLLER_COMM__CHECKSUM
-#define CONTROLLER_COMM__DEBUG
+//#define CONTROLLER_COMM__DEBUG
 
 #include "uart.h"
 #include "gpio.h"
@@ -136,7 +136,7 @@ bool controller_com__get_player_1_button();
 bool controller_com__get_player_2_button();
 controller_comm__controller_tilt_e controller_comm__get_player_1_tilt();
 controller_comm__controller_tilt_e controller_comm__get_player_2_tilt();
-bool controller_comm__update_player_score(controller_comm__role_e player, uint8_t score);
+bool controller_comm__update_player_score(controller_comm__role_e player, uint16_t score);
 void controller_comm__freertos_task(void *controller_comm_struct);
 
 // clang-format on
