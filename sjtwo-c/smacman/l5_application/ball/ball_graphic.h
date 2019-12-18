@@ -25,3 +25,5 @@ void set_players_score(uint8_t score_green, uint8_t score_blue);
 uint8_t get_blue_player_score(void);
 
 uint8_t get_green_player_score(void);
+
+uint8_t max_get_max_score(void);

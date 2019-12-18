@@ -16,7 +16,13 @@
 #include "semphr.h"
 #include "smacman_common.h"
 
+typedef struct {
+  TaskHandle_t blue_pac;
+  TaskHandle_t green_pac;
+} main__pac_task_s;
+
 xSemaphoreHandle mutex_for_spi;
+xSemaphoreHandle signal_for_pacman_suspended;
 static controller_comm_s controller;
 static gpio_s gpio_tx, gpio_rx;
 extern volatile bool collided;
@@ -32,22 +38,28 @@ static void master_task(void *params);
 // static void green_paddle_task(void *params);
 // static void ball_task(void *params);
 static void display_task(void *params);
+static void main__blue_packman_task_with_all_levels(void *params);
+static void main__pacman_all_levels_task_init(TaskHandle_t *xPacmanHandle);
 
 static BaseType_t create_task_game(void *function_name, char *task_name, uint32_t stack_size, void *p, uint8_t priority,
                                    TaskHandle_t *xTaskHandle, bool is_suspended);
 
 void controller_gpio_init();
+static void _test_pause_timer(void *params);
 
 gpio_s led0, led1, led2, led3;
 gpio_s switch0, switch1, switch2, switch3;
 paddle_s blue_paddle, green_paddle;
 pacman_s blue_pacman_init_level1, green_pacman_init_level1, blue_pacman_init_level2, green_pacman_init_level2;
 // int ball_level;
-QueueHandle_t state_main_queue;
+QueueHandle_t state_main_queue, state_pacman_pause_queue;
 ball_param ball_level_queue;
+
+main__pac_task_s pacman_tasks;
 
 int main(void) {
   state_main_queue = xQueueCreate(1, sizeof(game_logic_game_state_s));
+  state_pacman_pause_queue = xQueueCreate(1, sizeof(bool));
   blue_paddle_direction_queue = xQueueCreate(1, sizeof(paddle_direction_e));
   green_paddle_direction_queue = xQueueCreate(1, sizeof(paddle_direction_e));
 
@@ -55,6 +67,7 @@ int main(void) {
   smacman__startup();
   // mutex_for_spi = xSemaphoreCreateMutex();
   mutex_for_spi = xSemaphoreCreateBinary();
+  signal_for_pacman_suspended = xSemaphoreCreateBinary();
   // ssp2__initialize(24 * 1000);
 
   acceleration__axis_data_s sensor_avg_value;
@@ -65,6 +78,9 @@ int main(void) {
 
   xTaskCreate(controller_comm__freertos_task, "controller", (5000U / sizeof(void *)), (void *)&controller, PRIORITY_LOW,
               NULL);
+#else
+  xTaskCreate(_test_pause_timer, "for_pause", (1024U / sizeof(void *)), NULL, PRIORITY_MEDIUM, NULL);
+
 #endif
   xTaskCreate(master_task, "master_task", (4096U / sizeof(void *)), NULL, PRIORITY_CRITICAL, NULL);
   xTaskCreate(display_task, "Display_Task", (1024U / sizeof(void *)), NULL, PRIORITY_HIGH, NULL);
@@ -96,27 +112,70 @@ static BaseType_t create_task_game(void *function_name, char *task_name, uint32_
   return xReturned;
 }
 
+void check_score(pacman_level_e *which_pacman_level, TaskHandle_t *xPacmanHandle) {
+  int score_now = max_get_max_score();
+  game_logic_game_state_s temp_game_current_state_send;
+  if ((score_now > 0) && (score_now <= 33) && (*which_pacman_level == PACMAN_LEVEL_3)) {
+    vTaskSuspend(pacman_tasks.blue_pac);
+    vTaskSuspend(pacman_tasks.green_pac);
+    pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l1];
+    pacman_tasks.green_pac = xPacmanHandle[green_pacman_l1];
+    ball_level_queue.level = 1;
+    *which_pacman_level = PACMAN_LEVEL_1;
+    temp_game_current_state_send = IN_PROGRESS_STATE;
+    xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+
+  } else if ((score_now > 33) && (score_now < 66) && (*which_pacman_level == PACMAN_LEVEL_1)) {
+    vTaskSuspend(pacman_tasks.blue_pac);
+    vTaskSuspend(pacman_tasks.green_pac);
+    pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l2];
+    pacman_tasks.green_pac = xPacmanHandle[green_pacman_l2];
+    ball_level_queue.level = 2;
+    *which_pacman_level = PACMAN_LEVEL_2;
+    temp_game_current_state_send = IN_PROGRESS_STATE;
+    xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+  } else if ((score_now > 33) && (score_now < 66) && (*which_pacman_level == PACMAN_LEVEL_2)) {
+    vTaskSuspend(pacman_tasks.blue_pac);
+    vTaskSuspend(pacman_tasks.green_pac);
+    pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l2];
+    pacman_tasks.green_pac = xPacmanHandle[green_pacman_l2];
+    ball_level_queue.level = 3;
+    *which_pacman_level = PACMAN_LEVEL_3;
+    temp_game_current_state_send = IN_PROGRESS_STATE;
+    xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+  }
+}
+
 static void master_task(void *params) {
   set_game_state(INIT_STATE);
   game_logic_game_state_s game_current_state;                        // INIT_STATE;
   game_logic_game_state_s temp_game_current_state_send = INIT_STATE; // INIT_STATE;
   BaseType_t xReturned;
   TaskHandle_t xHandle[6] = {NULL};
-  pacman_level_e which_pacman_level = PACMAN_LEVEL_3;
+  int score_now = -1;
+
+  pacman_level_e which_pacman_level = PACMAN_LEVEL_1;
+  TaskHandle_t xPacmanHandle[6] = {NULL};
 
   xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
-
+  main__pacman_all_levels_task_init(&xPacmanHandle);
+  pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l1];
+  pacman_tasks.green_pac = xPacmanHandle[green_pacman_l1];
   while (1) {
+
     xQueueReceive(*(ball_level_queue.state_queue), &game_current_state, portMAX_DELAY);
     // fprintf(stderr, "Game Current State = %d\n", game_current_state);
     // get_game_state();
     switch (game_current_state) {
     case INIT_STATE:
       common__splash_screen(); // WIll Show splash screen in the start;
-      xReturned = create_task_game(pacman_level_task[which_pacman_level], "blue_pacman", 2048, &blue_pacman_init_level2,
-                                   PRIORITY_LOW, &xHandle[blue_pacman], TASK_SUSPENDED);
-      xReturned = create_task_game(pacman_level_task[which_pacman_level], "green_pacman", 2048,
-                                   &green_pacman_init_level2, PRIORITY_LOW, &xHandle[green_pacman], TASK_SUSPENDED);
+      // xReturned = create_task_game(pacman_level_task[which_pacman_level], "blue_pacman", 2048,
+      // &blue_pacman_init_level2,
+      //  PRIORITY_LOW, &xHandle[blue_pacman], TASK_SUSPENDED);
+      xReturned = create_task_game(main__blue_packman_task_with_all_levels, "blue_pacman", 2048,
+                                   &blue_pacman_init_level1, PRIORITY_LOW, &xHandle[blue_pacman], TASK_SUSPENDED);
+      // xReturned = create_task_game(pacman_level_task[which_pacman_level], "green_pacman", 2048,
+      //                              &green_pacman_init_level1, PRIORITY_LOW, &xHandle[green_pacman], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_blue", 2048, &blue_paddle, PRIORITY_MEDIUM,
                                    &xHandle[paddle_blue], TASK_SUSPENDED);
       xReturned = create_task_game(paddle_task, "paddle_green", 2048, &green_paddle, PRIORITY_MEDIUM,
@@ -126,6 +185,7 @@ static void master_task(void *params) {
 
       xReturned = create_task_game(score_task, "players_score", 2048, NULL, PRIORITY_MEDIUM, &xHandle[players_score],
                                    TASK_NOT_SUSPENDED);
+
 #if SMACMAN_CONTROLLER_CONNECTED
 #else
       vTaskDelay(5000);
@@ -135,23 +195,29 @@ static void master_task(void *params) {
 #else
       temp_game_current_state_send = IN_PROGRESS_STATE;
       xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+      score_now = 0;
 #endif
       // game_current_state = IN_PROGRESS_STATE;
       break;
     case IN_PROGRESS_STATE:
       // SMACMAN__DEBUG_PRINTF("")
       fprintf(stderr, "In progress state\n");
+      check_score(&which_pacman_level, xPacmanHandle);
       vTaskSuspend(xHandle[players_score]);
-      vTaskResume(xHandle[blue_pacman]);
-      vTaskResume(xHandle[green_pacman]);
+      vTaskResume(pacman_tasks.blue_pac);
+      vTaskResume(pacman_tasks.green_pac);
+      // vTaskResume(xHandle[blue_pacman]);
+      // vTaskResume(xHandle[green_pacman]);
       vTaskResume(xHandle[paddle_blue]);
       vTaskResume(xHandle[paddle_green]);
       vTaskResume(xHandle[ball]);
       break;
     case IN_PAUSE_STATE:
       fprintf(stderr, "In Pause state\n");
-      vTaskSuspend(xHandle[blue_pacman]);
-      vTaskSuspend(xHandle[green_pacman]);
+      // vTaskSuspend(xHandle[blue_pacman]);
+      vTaskSuspend(pacman_tasks.blue_pac);
+      vTaskSuspend(pacman_tasks.green_pac);
+      // vTaskSuspend(xHandle[green_pacman]);
       vTaskSuspend(xHandle[paddle_blue]);
       vTaskSuspend(xHandle[paddle_green]);
       vTaskSuspend(xHandle[ball]);
@@ -237,4 +303,55 @@ static void smacman__startup(void) {
 #if SMACMAN_CONTROLLER_CONNECTED
   controller_gpio_init();
 #endif
+}
+
+static void main__pacman_all_levels_task_init(TaskHandle_t *xPacmanHandle) {
+  BaseType_t xReturned;
+  xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_1], "blue_pacman_1", 2048, &blue_pacman_init_level1,
+                               PRIORITY_LOW, &xPacmanHandle[blue_pacman_l1], TASK_SUSPENDED);
+  xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_1], "green_pacman", 2048, &green_pacman_init_level1,
+                               PRIORITY_LOW, &xPacmanHandle[green_pacman_l1], TASK_SUSPENDED);
+
+  xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_2], "blue_pacman", 2048, &blue_pacman_init_level2,
+                               PRIORITY_LOW, &xPacmanHandle[blue_pacman_l2], TASK_SUSPENDED);
+  xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_2], "green_pacman", 2048, &green_pacman_init_level2,
+                               PRIORITY_LOW, &xPacmanHandle[green_pacman_l2], TASK_SUSPENDED);
+
+  xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_3], "blue_pacman", 2048, &blue_pacman_init_level2,
+                               PRIORITY_LOW, &xPacmanHandle[blue_pacman_l3], TASK_SUSPENDED);
+  xReturned = create_task_game(pacman_level_task[PACMAN_LEVEL_3], "green_pacman", 2048, &green_pacman_init_level2,
+                               PRIORITY_LOW, &xPacmanHandle[green_pacman_l3], TASK_SUSPENDED);
+}
+
+static void main__blue_packman_task_with_all_levels(void *params) {
+  int score = 0;
+  bool state;
+  TaskHandle_t xPacmanHandle[6] = {NULL};
+  main__pacman_all_levels_task_init(&xPacmanHandle);
+
+  while (1) {
+    pacman_tasks.blue_pac = xPacmanHandle[blue_pacman_l1];
+    pacman_tasks.green_pac = xPacmanHandle[green_pacman_l1];
+
+    // if(score >0){
+
+    // }
+
+    // pacman_task_level1(&blue_pacman_init_level1);
+    // vTaskDelay(50);
+  }
+}
+
+static void _test_pause_timer(void *params) {
+  game_logic_game_state_s temp_game_current_state_send;
+  vTaskDelay(5500);
+  while (1) {
+    printf("in pause\n");
+    temp_game_current_state_send = IN_PAUSE_STATE;
+    xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+    vTaskDelay(2000);
+    temp_game_current_state_send = IN_PROGRESS_STATE;
+    xQueueSend(*(ball_level_queue.state_queue), &temp_game_current_state_send, portMAX_DELAY);
+    vTaskDelay(5000);
+  }
 }

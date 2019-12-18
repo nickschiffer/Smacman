@@ -10,7 +10,7 @@ void pacman_task_level1(void *task_param) {
   ball_s ball_pos;
 
   while (true) {
-
+    printf("Pacman in level1\n");
     if (pacman.packman_color == BLUE) {
       led_matrix__fill_frame_buffer_inside_grid_upper_half(); // Player 1
       pac_player = PLAYER_1;
@@ -294,6 +294,7 @@ void pacman_task_level2(void *task_param) {
   bool initial_display = 1;
   // bool start_detection;
   while (true) {
+    printf("Pacman in level2\n");
     // Task for blue
     if (pacman.packman_color == BLUE) {
       pac_player = PLAYER_1;
@@ -402,6 +403,7 @@ void pacman_task_level3(void *task_param) {
   bool start_detection;
 
   while (true) {
+    printf("Pacman in level3\n");
     // Task for blue
     if (pacman.packman_color == BLUE) {
       pac_player = PLAYER_1;
